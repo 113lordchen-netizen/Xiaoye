@@ -2,18 +2,18 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>小野 • AI 排版编辑器 V34.0 (全端响应式)</title>
+<title>小野 • AI 排版编辑器 V38.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
 /* =========================================
-   1. 全局基础 (Global Base)
+   1. 全局基础
    ========================================= */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { 
     background: #fdfcf8; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; 
     margin: 0; padding: 0; 
     height: 100vh; 
     display: flex; 
@@ -21,7 +21,7 @@ body {
 }
 
 /* =========================================
-   2. 侧边栏 (Sidebar) - 电脑端常驻，手机端变抽屉
+   2. 侧边栏 (PC 常驻)
    ========================================= */
 .sidebar { 
     width: 290px; 
@@ -30,7 +30,7 @@ body {
     display: flex; 
     flex-direction: column; 
     height: 100%; 
-    z-index: 200; /* 高层级，适配手机遮罩 */
+    z-index: 200; 
     box-shadow: 4px 0 20px rgba(0,0,0,0.02);
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -42,74 +42,67 @@ body {
     display: flex; align-items: center; gap: 10px; 
     background: #fff; flex-shrink: 0; 
 }
-.sidebar-header span { font-size: 24px; } /* 色盘图标 */
+.sidebar-header span { font-size: 24px; }
 
-/* 手机端遮罩层 */
+/* 手机端遮罩 */
 .drawer-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); z-index: 190;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 190;
     opacity: 0; visibility: hidden; transition: all 0.3s;
 }
 
 .template-list { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; }
 
-/* 拖拽/点击 卡片样式 */
+/* 模板卡片 (PC 默认) */
 .category-group { margin-bottom: 25px; background: #fff; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
-.category-group:hover { border-color: #e0e0e0; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-.category-label { font-size: 13px; color: #555; margin: 10px 10px 15px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; border-left: 4px solid #b8d38f; padding-left: 8px; }
+.category-label { font-size: 13px; color: #555; margin: 10px 10px 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; border-left: 4px solid #b8d38f; padding-left: 8px; }
 
 .tpl-card { 
     background: #fff; border-radius: 12px; overflow: hidden; margin: 0 10px 12px; 
     box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 2px solid #f5f5f5; 
     position: relative; transition: all 0.2s;
 }
-.tpl-card:active { transform: scale(0.98); } /* 手机点击反馈 */
-.tpl-card:hover { transform: translateY(-3px); border-color: #b8d38f; } /* 电脑悬停反馈 */
+.tpl-card:hover { transform: translateY(-3px); border-color: #b8d38f; }
 
 .card-thumb { height: 80px; width: 100%; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
-.card-name { padding: 10px; font-size: 12px; color: #444; font-weight: 600; border-top: 1px solid #f9f9f9; display: flex; justify-content: space-between; }
+.card-name { padding: 10px; font-size: 12px; color: #444; font-weight: 600; border-top: 1px solid #f9f9f9; display: flex; justify-content: space-between; align-items: center; }
 .tag-pro { background: linear-gradient(135deg, #FFD700, #FDB931); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
 
 /* =========================================
-   3. 主工作区 (Main Area)
+   3. 主工作区 & 品牌头
    ========================================= */
 .main-area { 
-    flex: 1; 
-    display: flex; 
-    flex-direction: column; 
-    padding: 20px 30px 30px; 
-    min-width: 0; 
-    background: #fdfcf8; 
-    position: relative;
+    flex: 1; display: flex; flex-direction: column; 
+    padding: 20px 30px 30px; min-width: 0; background: #fdfcf8; position: relative;
 }
 
-/* --- 品牌顶栏 (PC/Mobile 通用) --- */
-.brand-header {
-    display: flex; align-items: center; margin-bottom: 25px; padding-left: 5px; gap: 15px;
-}
-/* 汉堡菜单按钮 (默认隐藏，手机显示) */
-.menu-btn { 
-    display: none; font-size: 24px; background: none; border: none; cursor: pointer; padding: 0 10px 0 0; 
-}
+.brand-header { display: flex; align-items: center; margin-bottom: 25px; padding-left: 5px; gap: 15px; }
+.menu-btn { display: none; font-size: 24px; background: none; border: none; cursor: pointer; padding: 0 10px 0 0; }
+
+.brand-group { display: flex; align-items: center; gap: 10px; }
 
 .brand-name {
     font-size: 42px; font-family: "Xingkai SC", "STXingkai", "KaiTi", cursive, serif; font-weight: normal; 
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 33%, #a18cd1 66%, #30cfd0 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     letter-spacing: 2px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(255, 154, 158, 0.2));
+    flex-shrink: 0;
 }
+
 .brand-meta { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+
 .brand-tech-tag {
     font-size: 11px; color: #6a85b6; font-family: sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
     padding: 4px 12px; border-radius: 50px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
     border: 1px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03); align-self: flex-start;
+    white-space: nowrap; 
 }
-.brand-slogan { font-size: 13px; color: #9ea7b0; font-family: "KaiTi", serif; letter-spacing: 2px; font-style: italic; padding-left: 2px; }
 
-/* 手机端模式切换开关 (默认隐藏) */
+.brand-slogan { font-size: 13px; color: #9ea7b0; font-family: "KaiTi", serif; letter-spacing: 2px; font-style: italic; padding-left: 2px; white-space: nowrap; }
+
 .mobile-switch { display: none; }
 
-/* --- 工具栏 (Toolbar) --- */
+/* PC 工具栏 */
 .toolbar { 
     background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); 
     padding: 12px 20px; border-radius: 20px; margin-bottom: 20px; 
@@ -117,102 +110,114 @@ body {
     box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(255, 255, 255, 0.8); 
     flex-shrink: 0; transition: all 0.3s;
 }
-/* 水晶按钮样式 */
-button.tool-btn { 
+
+.tool-btn { 
     padding: 9px 20px; border: none; border-radius: 14px; font-size: 13px; font-weight: 700; 
     display: flex; align-items: center; gap: 6px; cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; top: 0;
     box-shadow: inset 0 2px 1px rgba(255,255,255, 0.9), inset 0 -2px 3px rgba(0,0,0, 0.05), 0 4px 10px rgba(0,0,0, 0.05);
 }
-button.tool-btn:hover { transform: translateY(-3px); box-shadow: inset 0 2px 1px rgba(255,255,255, 1), 0 8px 15px rgba(0,0,0, 0.15); }
-button.tool-btn:active { top: 1px; transform: scale(0.96); }
+.tool-btn:hover { transform: translateY(-3px); }
+.tool-btn:active { top: 1px; transform: scale(0.96); }
+.tool-btn .icon-box { display: none; } 
+.tool-btn .btn-text { display: inline; }
 
+/* 配色 */
 .btn-preview { background: linear-gradient(145deg, #e4f5cc, #b8d38f); color: #4a6620; }
 .btn-copy { background: linear-gradient(145deg, #dcfce7, #b8f1cc); color: #206642; }
 .btn-refresh { background: linear-gradient(145deg, #ffebee, #f1707d); color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.1); }
 .btn-img { background: linear-gradient(145deg, #fff5e6, #f2debd); color: #8c6b36; }
 .btn-clear { background: linear-gradient(145deg, #ffffeb, #f1f1b8); color: #d64554; margin-left: auto; }
 
-/* --- 核心工作区 (Workspace) --- */
+/* 编辑区 */
 .workspace { display: flex; gap: 30px; flex: 1; min-height: 0; position: relative; }
-
-/* 代码区 */
-.input-container {
-    flex: 1; border: 2px solid #e0e0e0; border-radius: 16px; background: #fff;
-    display: flex; flex-direction: column; overflow: hidden; transition: border-color 0.2s;
-}
+.input-container { flex: 1; border: 2px solid #e0e0e0; border-radius: 16px; background: #fff; display: flex; flex-direction: column; overflow: hidden; }
 .input-container:focus-within { border-color: #b8f1cc; }
-#input { 
-    flex: 1; border: none; padding: 20px; font-family: 'Menlo', monospace; font-size: 13px; line-height: 1.7; 
-    resize: none; outline: none; background: transparent; color: #555; 
-}
-
-/* 预览区 */
-.preview-wrap { 
-    flex: 1; background: #fff; border: 1px solid #fff; border-radius: 16px; 
-    display: flex; flex-direction: column; overflow: hidden; 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.06); 
-}
+#input { flex: 1; border: none; padding: 20px; font-family: 'Menlo', monospace; font-size: 13px; line-height: 1.7; resize: none; outline: none; background: transparent; color: #555; }
+.preview-wrap { flex: 1; background: #fff; border: 1px solid #fff; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
 .preview-head { background: #fafafa; padding: 12px 20px; font-size: 12px; color: #888; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
 .edit-badge { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; }
 .preview-content-scroll { flex: 1; overflow-y: auto; }
-#output { padding: 35px; min-height: 100%; outline: none; }
+/* V38 关键修改：增加底部 padding，让用户能把文字顶上去 */
+#output { padding: 35px; min-height: 100%; outline: none; padding-bottom: 300px; /* 键盘缓冲区 */ } 
 #output:empty:before { content: "✨ 请点击左侧模板..."; color: #ddd; font-size: 14px; display: block; text-align: center; margin-top: 80px; }
 
 /* =========================================
-   4. 响应式魔法 (Responsive Magic)
-   当屏幕宽度 < 768px (手机/竖屏Pad) 时生效
+   4. 移动端重构
    ========================================= */
 @media (max-width: 768px) {
-    /* 侧边栏变为抽屉 */
-    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); width: 80%; transition: transform 0.3s; }
+    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); width: 240px; transition: transform 0.3s; }
     .sidebar.open { transform: translateX(0); }
     .drawer-overlay.open { opacity: 1; visibility: visible; }
     
-    /* 导航栏调整 */
-    .main-area { padding: 10px; }
-    .brand-header { margin-bottom: 15px; justify-content: space-between; }
-    .menu-btn { display: block; } /* 显示汉堡菜单 */
-    .brand-name { font-size: 28px; } /* 缩小字号 */
-    .brand-meta { display: none; } /* 手机隐藏复杂Slogan，留空间 */
+    .template-list { padding: 10px; }
+    .category-group { margin-bottom: 15px; border: none; box-shadow: none; border-radius: 0; background: transparent;}
+    .category-label { margin: 5px 0 10px; font-size: 12px; color: #999; border: none; padding-left: 0; }
     
-    /* 显示模式切换开关 */
-    .mobile-switch { 
-        display: flex; background: #f0f0f0; border-radius: 20px; padding: 2px; 
-        position: relative; width: 90px; height: 32px;
-    }
+    .tpl-card { display: flex; align-items: center; height: 50px; margin: 0 0 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
+    .tpl-card:active { transform: scale(0.98); background: #f9f9f9; }
+    .card-thumb { width: 40px; height: 100%; border-radius: 0; flex-shrink: 0; font-size: 18px; }
+    .card-name { flex: 1; border-top: none; padding: 0 10px; font-size: 13px; justify-content: flex-start; gap: 10px; }
+    .tag-pro { margin-left: auto; font-size: 8px; }
+
+    /* 导航 */
+    .main-area { padding: 10px; padding-bottom: 95px; }
+    .brand-header { margin-bottom: 15px; justify-content: space-between; padding-left: 0; gap: 5px; }
+    .menu-btn { display: block; font-size: 20px; }
+    
+    /* 品牌 Stack */
+    .brand-group { gap: 6px; } 
+    .brand-name { font-size: 26px; } 
+    .brand-meta { display: flex !important; gap: 3px; }
+    .brand-tech-tag { font-size: 8px; padding: 2px 6px; border-radius: 4px; letter-spacing: 0; }
+    .brand-slogan { font-size: 9px; letter-spacing: 0.5px; }
+    
+    /* 手机开关 */
+    .mobile-switch { display: flex; background: #f0f0f0; border-radius: 20px; padding: 2px; position: relative; width: 90px; height: 32px; flex-shrink: 0;}
     .m-switch-btn { flex: 1; font-size: 12px; text-align: center; line-height: 28px; z-index: 2; color: #666; transition: 0.2s; }
     .m-switch-btn.active { color: #333; font-weight: bold; }
-    .m-switch-bg { 
-        position: absolute; width: 48%; height: 28px; background: #fff; border-radius: 18px; top: 2px; left: 2px;
-        transition: transform 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-    }
+    .m-switch-bg { position: absolute; width: 48%; height: 28px; background: #fff; border-radius: 18px; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .mobile-switch[data-mode="preview"] .m-switch-bg { transform: translateX(95%); }
 
-    /* 工作区变为堆叠模式 */
-    .workspace { position: relative; display: block; height: calc(100vh - 140px); overflow: hidden; }
-    .input-container, .preview-wrap { 
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-        transition: opacity 0.2s, visibility 0.2s;
-    }
-    
-    /* 默认显示代码，隐藏预览 */
+    /* 工作区 */
+    .workspace { position: relative; display: block; height: calc(100vh - 120px); overflow: hidden; }
+    .input-container, .preview-wrap { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.2s, visibility 0.2s; }
+    /* V38 调整：默认让预览层在下面待命，切换时显示 */
     .preview-wrap { opacity: 0; visibility: hidden; z-index: 5; }
     .preview-wrap.active { opacity: 1; visibility: visible; }
     
-    /* 工具栏沉底 */
+    /* 底部 Dock */
     .toolbar { 
-        position: fixed; bottom: 0; left: 0; right: 0; 
-        margin: 0; border-radius: 0; border-top: 1px solid #eee;
-        justify-content: space-around; padding: 10px; z-index: 100;
-        background: rgba(255,255,255,0.95);
+        position: fixed; bottom: 20px; left: 20px; right: 20px; margin: 0; height: 70px; 
+        background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); 
+        border: 1px solid rgba(255,255,255,0.6); border-radius: 25px; 
+        justify-content: space-between; padding: 0 15px; z-index: 100;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
     }
-    /* 按钮样式简化 */
-    button.tool-btn { flex-direction: column; padding: 5px; font-size: 10px; background: none; box-shadow: none; color: #666; gap: 2px; }
-    button.tool-btn:hover { transform: none; box-shadow: none; color: #1989fa; }
+    
+    .tool-btn { 
+        padding: 0; background: none !important; border: none; box-shadow: none !important;
+        flex-direction: column; justify-content: center; gap: 3px; width: 50px;
+    }
+    .tool-btn:hover { transform: none; }
+    .tool-btn:active { transform: scale(0.9); opacity: 0.8; }
+
+    .tool-btn .icon-box {
+        display: flex; align-items: center; justify-content: center; 
+        width: 36px; height: 36px; border-radius: 50%; font-size: 18px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 5px rgba(0,0,0,0.1);
+        text-align: center; line-height: 1;
+    }
+    .btn-preview .icon-box { background: linear-gradient(135deg, #e4f5cc, #b8d38f); color: #2e5c18; }
+    .btn-copy .icon-box    { background: linear-gradient(135deg, #dcfce7, #b8f1cc); color: #164c2d; }
+    .btn-refresh .icon-box { background: linear-gradient(135deg, #ffebee, #f1707d); color: #fff; }
+    .btn-img .icon-box     { background: linear-gradient(135deg, #fff5e6, #f2debd); color: #6b4c1e; }
+    .btn-clear .icon-box   { background: linear-gradient(135deg, #ffffeb, #f1f1b8); color: #b03a46; }
+
+    .tool-btn .btn-text { font-size: 10px; color: #666; font-weight: 500; display: block; }
+    .btn-clear { margin-left: 0; }
 }
 
-/* 滚动条美化 */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
@@ -231,11 +236,7 @@ button.tool-btn:active { top: 1px; transform: scale(0.96); }
         <div class="category-group">
             <div class="category-label">🎄 节日限定</div>
             <div class="tpl-card" onclick="insertTpl('fest_xmas_v16')">
-                <div class="card-thumb" style="background: #C41E3A; color: #fff;">
-                    <div style="display:flex; flex-direction:column; align-items:center;">
-                        <span style="font-size:24px;">❄️</span>
-                    </div>
-                </div>
+                <div class="card-thumb" style="background: #C41E3A; color: #fff;">❄️</div>
                 <div class="card-name"><span>圣诞 · 完美边框</span></div>
             </div>
         </div>
@@ -243,15 +244,11 @@ button.tool-btn:active { top: 1px; transform: scale(0.96); }
         <div class="category-group">
             <div class="category-label">🎓 知识教育</div>
             <div class="tpl-card" onclick="insertTpl('edu_notebook_perfect')">
-                <div class="card-thumb" style="background: #fff9c4;">
-                    <div style="border-left: 2px dotted #555; height:100%; margin-left:10px; background: repeating-linear-gradient(transparent, transparent 9px, #ccc 10px);"></div>
-                </div>
+                <div class="card-thumb" style="background: #fff9c4;">📝</div>
                 <div class="card-name"><span>螺旋笔记 · 修复版</span><span class="tag-pro">Fix</span></div>
             </div>
             <div class="tpl-card" onclick="insertTpl('edu_blackboard')">
-                <div class="card-thumb" style="background: #24422e; border: 3px solid #8d6e63;">
-                    <div style="color:#fff; font-size:10px;">黑板</div>
-                </div>
+                <div class="card-thumb" style="background: #24422e; color:#fff;">📖</div>
                 <div class="card-name"><span>经典黑板 · 深绿</span></div>
             </div>
         </div>
@@ -259,9 +256,7 @@ button.tool-btn:active { top: 1px; transform: scale(0.96); }
         <div class="category-group">
             <div class="category-label">🚩 党政机关</div>
             <div class="tpl-card" onclick="insertTpl('gov_quote_pro_v20')">
-                <div class="card-thumb" style="background: #fff; border: 1px solid #ffcdd2;">
-                    <div style="width: 100%; height: 25px; background: #b71c1c; margin-bottom: 5px;"></div>
-                </div>
+                <div class="card-thumb" style="background: #b71c1c; color:#fff;">❝</div>
                 <div class="card-name"><span>红旗金句 · 丰富版</span></div>
             </div>
         </div>
@@ -269,9 +264,7 @@ button.tool-btn:active { top: 1px; transform: scale(0.96); }
         <div class="category-group">
             <div class="category-label">🖋️ 文艺随笔</div>
             <div class="tpl-card" onclick="insertTpl('lit_moon_pro')">
-                <div class="card-thumb" style="background: #fdfbf7;">
-                    <div style="width:20px; height:20px; background:#ddd; border-radius:50%; box-shadow:0 0 10px #ccc; margin: auto;"></div>
-                </div>
+                <div class="card-thumb" style="background: #ddd; color:#333;">☾</div>
                 <div class="card-name"><span>月光诗笺 · 宣纸</span></div>
             </div>
         </div>
@@ -282,15 +275,13 @@ button.tool-btn:active { top: 1px; transform: scale(0.96); }
     
     <div class="brand-header">
         <button class="menu-btn" onclick="toggleDrawer()">☰</button>
-        
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div class="brand-group">
             <span class="brand-name">小野</span>
             <div class="brand-meta">
                 <span class="brand-tech-tag">AI排版编辑器</span>
                 <span class="brand-slogan">小野一下就好</span>
             </div>
         </div>
-
         <div class="mobile-switch" id="mobileSwitch" onclick="toggleMobileMode()">
             <div class="m-switch-bg"></div>
             <div class="m-switch-btn active" id="mBtnCode">代码</div>
@@ -299,32 +290,46 @@ button.tool-btn:active { top: 1px; transform: scale(0.96); }
     </div>
 
     <div class="toolbar">
-        <button class="tool-btn btn-preview" onclick="toggleMobileMode()" title="手机端点击切换">👁️ 预览/代码</button>
-        <button class="tool-btn btn-copy" onclick="smartCopy()">📋 复制</button>
-        <button class="tool-btn btn-refresh" onclick="render()">↺ 刷新</button>
-        <button class="tool-btn btn-img" onclick="generateImage()">🖼️ 生图</button>
-        <button class="tool-btn btn-clear" onclick="clearInput()">🗑️ 清空</button>
+        <button class="tool-btn btn-preview" onclick="toggleMobileMode()">
+            <span class="icon-box">👁️</span>
+            <span class="btn-text">预览</span>
+        </button>
+        <button class="tool-btn btn-copy" onclick="smartCopy()">
+            <span class="icon-box">📋</span>
+            <span class="btn-text">复制</span>
+        </button>
+        <button class="tool-btn btn-refresh" onclick="render()">
+            <span class="icon-box">↺</span>
+            <span class="btn-text">刷新</span>
+        </button>
+        <button class="tool-btn btn-img" onclick="generateImage()">
+            <span class="icon-box">🖼️</span>
+            <span class="btn-text">生图</span>
+        </button>
+        <button class="tool-btn btn-clear" onclick="clearInput()">
+            <span class="icon-box">🗑️</span>
+            <span class="btn-text">清空</span>
+        </button>
     </div>
 
     <div class="workspace">
         <div class="input-container">
             <textarea id="input" placeholder="💡 左侧选择模板，或直接输入 HTML..."></textarea>
         </div>
-        
         <div class="preview-wrap" id="previewWrap">
             <div class="preview-head">
                 <span style="color:#555; font-weight:700;">效果预览</span>
-                <span class="edit-badge">电脑可编辑 / 手机只读</span>
+                <span class="edit-badge">双端可编辑 ✨</span>
             </div>
             <div class="preview-content-scroll">
-                <div id="output"></div>
+                <div id="output" contenteditable="true"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// --- 资源与模板 (核心数据) ---
+// 资源与模板保持不变
 const imgAssets = {
     spiralHole: "data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='40' viewBox='0 0 20 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='20' r='5' fill='%23555'/%3E%3C/svg%3E",
     paperGrain: "data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E",
@@ -343,34 +348,15 @@ const templates = {
     lit_moon_pro: `<section style="margin: 30px 0; padding: 20px;"><section style="background-color: #fcfbf5; background-image: url('${imgAssets.paperGrain}'); box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 50px 30px; position: relative; overflow: hidden; border: 1px solid #e8e6e0;"><section style="width: 50px; height: 50px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 40px; box-shadow: 0 0 25px rgba(200,200,200,0.5); position: relative; z-index: 1;"></section><h2 style="margin: 0 0 40px 0; font-size: 22px; color: #333; font-weight: normal; text-align: center; letter-spacing: 8px; font-family: 'Songti SC', serif; border-bottom: 1px solid #ddd; padding-bottom: 20px; width: 60%; margin-left: auto; margin-right: auto;">月光与诗</h2><p style="font-size: 16px; color: #555; line-height: 2.6; text-align: center; font-family: 'Songti SC', serif; margin: 0; padding: 0 10px;">在纸张的纹理间<br>寻找一丝静谧<br>不需要繁杂的装饰<br>文字本身，就是力量</p><section style="text-align: center; margin-top: 50px; opacity: 0.8;"><img src="${imgAssets.seal}" style="width: 35px; vertical-align: middle;"></section></section></section><br>`
 };
 
-// --- 功能逻辑 ---
+function isMobile() { return window.innerWidth <= 768; }
+function toggleDrawer() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.drawer-overlay').classList.toggle('open'); }
 
-// 判断是否为移动端 (简单粗暴版：宽度<768)
-function isMobile() {
-    return window.innerWidth <= 768;
-}
-
-// 侧边栏抽屉逻辑
-function toggleDrawer() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.querySelector('.drawer-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('open');
-}
-
-// 插入逻辑：电脑端直接渲染，手机端只填代码并收起抽屉
 function insertTpl(tplName) {
     const input = document.getElementById('input');
     const tplHtml = templates[tplName];
     if(!tplHtml) return;
-    
-    // 逻辑统一：替换
     input.value = tplHtml;
-    
-    // 渲染
     render();
-    
-    // 如果是手机端，自动关闭抽屉，并切到预览模式给用户看一眼
     if(isMobile()) {
         toggleDrawer();
         if(document.getElementById('mobileSwitch').getAttribute('data-mode') !== 'preview') {
@@ -379,37 +365,30 @@ function insertTpl(tplName) {
     }
 }
 
-// 渲染
 function render() { 
     const input = document.getElementById('input').value; 
     const output = document.getElementById('output'); 
+    
+    // 渲染 HTML
     if (!input.trim()) { if(output.innerHTML.trim() === "") output.innerHTML = ""; return; } 
     if (input.trim().startsWith('<')) { output.innerHTML = input; } 
     else { let html = input.split('\n').map(line => { line = line.trim(); if(!line) return '<br>'; if(line.startsWith('## ')) return `<h2 style="color:#1989fa;border-bottom:2px solid #1989fa;margin:20px 0 10px;">${line.substring(3)}</h2>`; return `<p style="margin:10px 0;line-height:1.6;color:#333;">${line}</p>`; }).join(''); output.innerHTML = html; } 
     
-    // 电脑端：开启编辑；手机端：关闭编辑
-    if(!isMobile()) {
-        output.setAttribute('contenteditable', 'true');
-    } else {
-        output.removeAttribute('contenteditable');
-    }
+    // V38 关键修改：无论手机还是PC，永远允许编辑
+    output.setAttribute('contenteditable', 'true');
 }
 
-// 手机端：代码/预览 切换
 function toggleMobileMode() {
     const sw = document.getElementById('mobileSwitch');
     const previewWrap = document.getElementById('previewWrap');
     const currentMode = sw.getAttribute('data-mode') || 'code';
-    
     if (currentMode === 'code') {
-        // 切到预览
         sw.setAttribute('data-mode', 'preview');
         document.getElementById('mBtnCode').classList.remove('active');
         document.getElementById('mBtnPreview').classList.add('active');
         previewWrap.classList.add('active');
-        render(); // 确保最新
+        render();
     } else {
-        // 切回代码
         sw.setAttribute('data-mode', 'code');
         document.getElementById('mBtnPreview').classList.remove('active');
         document.getElementById('mBtnCode').classList.add('active');
@@ -417,43 +396,48 @@ function toggleMobileMode() {
     }
 }
 
-// 复制
 function smartCopy() { 
     const output = document.getElementById('output'); 
     if (!output.innerText.trim() && !output.querySelector('img')) { alert("预览区为空"); return; } 
-    
-    // 如果是手机预览模式下，先确保渲染
     if(isMobile()) render();
-
     const allElements = output.querySelectorAll('*'); 
     allElements.forEach(el => { const style = window.getComputedStyle(el); if (style.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)') el.style.backgroundColor = style.backgroundColor; if (style.color) el.style.color = style.color; if (style.borderRadius !== '0px') el.style.borderRadius = style.borderRadius; if (style.backgroundImage !== 'none') el.style.backgroundImage = style.backgroundImage; if (style.borderTopWidth !== '0px') { el.style.borderTop = style.borderTop; el.style.borderBottom = style.borderBottom; el.style.borderLeft = style.borderLeft; el.style.borderRight = style.borderRight; } el.style.padding = style.padding; el.style.margin = style.margin; el.style.fontSize = style.fontSize; el.style.lineHeight = style.lineHeight; el.style.textAlign = style.textAlign; el.style.display = style.display; el.style.boxShadow = style.boxShadow; el.style.textShadow = style.textShadow; el.style.borderImage = style.borderImage;}); 
     let htmlContent = output.innerHTML; 
     htmlContent = htmlContent.replace(/<div/gi, '<section'); htmlContent = htmlContent.replace(/<\/div>/gi, '</section>'); 
     const copyHandler = (e) => { e.preventDefault(); e.clipboardData.setData('text/html', htmlContent); e.clipboardData.setData('text/plain', output.innerText); }; 
     document.addEventListener('copy', copyHandler); 
-    try { const successful = document.execCommand('copy'); if (successful) { alert("✅ 复制成功！"); } else { throw new Error('Copy failed'); } } catch (err) { alert('请手动全选复制'); } finally { document.removeEventListener('copy', copyHandler); } 
+    try { const successful = document.execCommand('copy'); if (successful) { alert("✅ 已复制！去公众号粘贴吧"); } else { throw new Error('Copy failed'); } } catch (err) { alert('请手动全选复制'); } finally { document.removeEventListener('copy', copyHandler); } 
 }
 
-// 生图
 function generateImage() { 
     const output = document.getElementById('output'); 
     if (!output.innerText.trim() && !output.querySelector('img')) { alert("预览区为空"); return; } 
     const btn = document.querySelector('.btn-img'); 
-    const originalText = btn.innerHTML; 
-    btn.innerHTML = "⏳ 处理中..."; 
+    const originalText = isMobile() ? "生图" : "🖼️ 生图"; 
+    
+    if(isMobile()) document.querySelector('.btn-img .btn-text').innerText = "⏳";
+    else btn.innerText = "⏳";
+
     const originalBg = output.style.backgroundColor; 
     output.style.backgroundColor = "#ffffff"; 
-    html2canvas(output, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => { const link = document.createElement('a'); link.download = '小野排版_' + new Date().getTime() + '.png'; link.href = canvas.toDataURL(); link.click(); btn.innerHTML = "✅ 已保存"; output.style.backgroundColor = originalBg; setTimeout(() => { btn.innerHTML = originalText; }, 2000); }).catch(err => { alert("生成失败，请检查网络"); btn.innerHTML = originalText; output.style.backgroundColor = originalBg; }); 
+    html2canvas(output, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => { 
+        const link = document.createElement('a'); 
+        link.download = '小野排版_' + new Date().getTime() + '.png'; 
+        link.href = canvas.toDataURL(); 
+        link.click(); 
+        
+        if(isMobile()) document.querySelector('.btn-img .btn-text').innerText = "生图";
+        else btn.innerText = originalText;
+        output.style.backgroundColor = originalBg; 
+    }).catch(err => { 
+        alert("生成失败"); 
+        if(isMobile()) document.querySelector('.btn-img .btn-text').innerText = "生图";
+        else btn.innerText = originalText;
+        output.style.backgroundColor = originalBg; 
+    }); 
 }
 
-function clearInput() { 
-    if(confirm("确定清空吗？")) {
-        document.getElementById('input').value = ''; 
-        document.getElementById('output').innerHTML = ''; 
-    }
-}
-
-// 初始化渲染
+function clearInput() { if(confirm("确定清空吗？")) { document.getElementById('input').value = ''; document.getElementById('output').innerHTML = ''; } }
 window.onload = render;
 </script>
 </body>
