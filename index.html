@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>小野 • AI 排版编辑器 V39.0 (实时版)</title>
+<title>小野 • AI 排版编辑器 V40.0 (终极修复版)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -138,7 +138,6 @@ body {
 .preview-head { background: #fafafa; padding: 12px 20px; font-size: 12px; color: #888; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
 .edit-badge { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; }
 .preview-content-scroll { flex: 1; overflow-y: auto; }
-/* V38/39 关键：底部缓冲 */
 #output { padding: 35px; min-height: 100%; outline: none; padding-bottom: 300px; } 
 #output:empty:before { content: "✨ 请点击左侧模板..."; color: #ddd; font-size: 14px; display: block; text-align: center; margin-top: 80px; }
 
@@ -185,18 +184,24 @@ body {
     .preview-wrap { opacity: 0; visibility: hidden; z-index: 5; }
     .preview-wrap.active { opacity: 1; visibility: visible; }
     
-    /* 底部 Dock */
+    /* V40 修复：底部 Dock 更安全的布局 */
     .toolbar { 
-        position: fixed; bottom: 20px; left: 20px; right: 20px; margin: 0; height: 70px; 
+        position: fixed; bottom: 20px; 
+        left: 10px; right: 10px; /* 缩小边距防止溢出 */
+        margin: 0; height: 70px; 
         background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); 
         border: 1px solid rgba(255,255,255,0.6); border-radius: 25px; 
-        justify-content: space-between; padding: 0 15px; z-index: 100;
+        justify-content: space-between; 
+        padding: 0 10px; /* 减小内边距 */
+        z-index: 100;
         box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
     }
     
+    /* V40 修复：按钮自适应宽度 */
     .tool-btn { 
         padding: 0; background: none !important; border: none; box-shadow: none !important;
-        flex-direction: column; justify-content: center; gap: 3px; width: 50px;
+        flex-direction: column; justify-content: center; gap: 3px; 
+        width: auto; flex: 1; /* 弹性宽度，均匀分布 */
     }
     .tool-btn:hover { transform: none; }
     .tool-btn:active { transform: scale(0.9); opacity: 0.8; }
@@ -382,8 +387,6 @@ function toggleMobileMode() {
     const previewWrap = document.getElementById('previewWrap');
     const currentMode = sw.getAttribute('data-mode') || 'code';
     
-    // V39 修复：点击切换按钮时，强制执行一次渲染
-    // 这样能确保即使在 PC 模式下误点，也能刷新内容
     render();
 
     if (currentMode === 'code') {
@@ -415,11 +418,13 @@ function smartCopy() {
 function generateImage() { 
     const output = document.getElementById('output'); 
     if (!output.innerText.trim() && !output.querySelector('img')) { alert("预览区为空"); return; } 
-    const btn = document.querySelector('.btn-img'); 
-    const originalText = isMobile() ? "生图" : "🖼️ 生图"; 
     
-    if(isMobile()) document.querySelector('.btn-img .btn-text').innerText = "⏳";
-    else btn.innerText = "⏳";
+    // V40 关键修复：永远不要破坏 HTML 结构，只修改文字节点
+    // 这样切换手机模式时，icon-box 依然存在
+    const btnText = document.querySelector('.btn-img .btn-text');
+    const originalText = btnText.innerText;
+    
+    btnText.innerText = "⏳"; // 只改文字，不改 innerHTML
 
     const originalBg = output.style.backgroundColor; 
     output.style.backgroundColor = "#ffffff"; 
@@ -429,13 +434,11 @@ function generateImage() {
         link.href = canvas.toDataURL(); 
         link.click(); 
         
-        if(isMobile()) document.querySelector('.btn-img .btn-text').innerText = "生图";
-        else btn.innerText = originalText;
+        btnText.innerText = originalText; // 还原文字
         output.style.backgroundColor = originalBg; 
     }).catch(err => { 
         alert("生成失败"); 
-        if(isMobile()) document.querySelector('.btn-img .btn-text').innerText = "生图";
-        else btn.innerText = originalText;
+        btnText.innerText = originalText;
         output.style.backgroundColor = originalBg; 
     }); 
 }
