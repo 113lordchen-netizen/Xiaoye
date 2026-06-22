@@ -1,450 +1,1065 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<title>小野 • AI 排版编辑器 V40.0 (终极修复版)</title>
+<title>小野 · AI排版编辑器</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <style>
-/* =========================================
-   1. 全局基础
-   ========================================= */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { 
-    background: #fdfcf8; 
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; 
-    margin: 0; padding: 0; 
-    height: 100vh; 
-    display: flex; 
-    overflow: hidden; 
+/* =============================================
+   CSS Variables
+   ============================================= */
+:root {
+    --bg-app:    #f4f1eb;
+    --bg-panel:  #ffffff;
+    --bg-input:  #fdfdfc;
+    --bg-side:   #f9f7f3;
+    --t1: #1c1916;
+    --t2: #4a453f;
+    --t3: #9a938a;
+    --bd: #e8e3d8;
+    --bd-focus: #72a878;
+    --green:     #72a878;
+    --green-bg:  #eaf4eb;
+    --amber:     #c8922a;
+    --amber-bg:  #fdf4e2;
+    --rose:      #c8505e;
+    --rose-bg:   #fdedef;
+    --blue:      #4a7db5;
+    --blue-bg:   #e8f0fa;
+    --sh1: 0 1px 4px rgba(0,0,0,.05), 0 2px 8px rgba(0,0,0,.04);
+    --sh2: 0 4px 16px rgba(0,0,0,.07);
+    --sh3: 0 10px 40px rgba(0,0,0,.12);
+    --r1: 8px; --r2: 12px; --r3: 16px;
+    --ease: cubic-bezier(.4,0,.2,1);
+    --sb: 258px;
+}
+[data-theme="dark"] {
+    --bg-app:   #1a1720;
+    --bg-panel: #221f28;
+    --bg-input: #1e1c24;
+    --bg-side:  #1c1a22;
+    --t1: #ede8e0;
+    --t2: #a8a198;
+    --t3: #58525a;
+    --bd: #2e2a36;
+    --bd-focus: #5a9060;
+    --green-bg: rgba(114,168,120,.15);
+    --amber-bg: rgba(200,146,42,.12);
+    --rose-bg:  rgba(200,80,94,.12);
+    --blue-bg:  rgba(74,125,181,.12);
+    --sh1: 0 1px 4px rgba(0,0,0,.3);
+    --sh2: 0 4px 16px rgba(0,0,0,.4);
+    --sh3: 0 10px 40px rgba(0,0,0,.55);
 }
 
-/* =========================================
-   2. 侧边栏 (PC 常驻)
-   ========================================= */
-.sidebar { 
-    width: 290px; 
-    background: #fff; 
-    border-right: 1px solid #f0f0f0; 
-    display: flex; 
-    flex-direction: column; 
-    height: 100%; 
-    z-index: 200; 
-    box-shadow: 4px 0 20px rgba(0,0,0,0.02);
-    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+/* =============================================
+   Reset
+   ============================================= */
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+    margin:0; padding:0; height:100vh;
+    display:flex; overflow:hidden;
+    background:var(--bg-app);
+    font-family: -apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
+    color:var(--t1);
+    transition: background .3s, color .3s;
 }
+button { cursor:pointer; font-family:inherit; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:var(--bd); border-radius:5px; }
+::-webkit-scrollbar-track { background:transparent; }
 
-.sidebar-header { 
-    padding: 22px; 
-    border-bottom: 1px solid #f5f5f5; 
-    font-weight: 800; font-size: 18px; color: #333; 
-    display: flex; align-items: center; gap: 10px; 
-    background: #fff; flex-shrink: 0; 
+/* =============================================
+   Toast Notifications
+   ============================================= */
+#toasts {
+    position:fixed; top:16px; right:16px;
+    display:flex; flex-direction:column; gap:8px;
+    z-index:9999; pointer-events:none;
 }
-.sidebar-header span { font-size: 24px; }
-
-/* 手机端遮罩 */
-.drawer-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 190;
-    opacity: 0; visibility: hidden; transition: all 0.3s;
+.toast {
+    display:flex; align-items:center; gap:9px;
+    padding:10px 14px; border-radius:var(--r2);
+    background:var(--bg-panel); border:1px solid var(--bd);
+    box-shadow:var(--sh3); font-size:13px; color:var(--t1);
+    opacity:0; transform:translateX(14px) scale(.97);
+    transition:all .22s var(--ease); pointer-events:none;
+    max-width:300px; line-height:1.4;
 }
+.toast.in { opacity:1; transform:none; }
+.toast.success { border-left:3px solid var(--green); }
+.toast.error   { border-left:3px solid var(--rose); }
+.toast.info    { border-left:3px solid var(--blue); }
+.toast.warning { border-left:3px solid var(--amber); }
 
-.template-list { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; }
-
-/* 模板卡片 (PC 默认) */
-.category-group { margin-bottom: 25px; background: #fff; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
-.category-label { font-size: 13px; color: #555; margin: 10px 10px 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; border-left: 4px solid #b8d38f; padding-left: 8px; }
-
-.tpl-card { 
-    background: #fff; border-radius: 12px; overflow: hidden; margin: 0 10px 12px; 
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 2px solid #f5f5f5; 
-    position: relative; transition: all 0.2s;
+/* =============================================
+   Overlay
+   ============================================= */
+.ov {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.4);
+    backdrop-filter:blur(4px);
+    z-index:190; opacity:0; visibility:hidden;
+    transition:all .28s var(--ease);
 }
-.tpl-card:hover { transform: translateY(-3px); border-color: #b8d38f; }
+.ov.on { opacity:1; visibility:visible; }
 
-.card-thumb { height: 80px; width: 100%; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; }
-.card-name { padding: 10px; font-size: 12px; color: #444; font-weight: 600; border-top: 1px solid #f9f9f9; display: flex; justify-content: space-between; align-items: center; }
-.tag-pro { background: linear-gradient(135deg, #FFD700, #FDB931); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
-
-/* =========================================
-   3. 主工作区 & 品牌头
-   ========================================= */
-.main-area { 
-    flex: 1; display: flex; flex-direction: column; 
-    padding: 20px 30px 30px; min-width: 0; background: #fdfcf8; position: relative;
+/* =============================================
+   Sidebar
+   ============================================= */
+.sidebar {
+    width:var(--sb); flex-shrink:0;
+    background:var(--bg-panel);
+    border-right:1px solid var(--bd);
+    display:flex; flex-direction:column;
+    height:100%; z-index:200;
+    transition:transform .32s var(--ease);
 }
+.sb-head {
+    display:flex; align-items:center; gap:10px;
+    padding:15px 16px; border-bottom:1px solid var(--bd);
+    flex-shrink:0;
+}
+.sb-logo {
+    width:30px; height:30px; border-radius:8px;
+    background:var(--green-bg); display:flex;
+    align-items:center; justify-content:center; font-size:14px;
+    flex-shrink:0; border:1px solid rgba(114,168,120,.2);
+}
+.sb-title { font-size:13px; font-weight:700; color:var(--t1); flex:1; letter-spacing:.2px; }
+.sb-close {
+    display:none; background:none; border:none;
+    color:var(--t3); font-size:22px; line-height:1;
+    padding:2px 4px; border-radius:6px;
+    transition:background .15s;
+}
+.sb-close:hover { background:var(--bd); }
 
-.brand-header { display: flex; align-items: center; margin-bottom: 25px; padding-left: 5px; gap: 15px; }
-.menu-btn { display: none; font-size: 24px; background: none; border: none; cursor: pointer; padding: 0 10px 0 0; }
+.sb-search {
+    padding:10px 14px;
+    border-bottom:1px solid var(--bd); flex-shrink:0;
+}
+.sb-search input {
+    width:100%; padding:7px 10px;
+    border:1px solid var(--bd); border-radius:var(--r1);
+    background:var(--bg-app); color:var(--t1);
+    font-size:12px; outline:none;
+    transition:border-color .2s;
+    font-family:inherit;
+}
+.sb-search input::placeholder { color:var(--t3); }
+.sb-search input:focus { border-color:var(--bd-focus); }
 
-.brand-group { display: flex; align-items: center; gap: 10px; }
+.tpl-list { flex:1; overflow-y:auto; padding:12px 10px; background:var(--bg-side); }
 
+.cat-group { margin-bottom:20px; }
+.cat-label {
+    font-size:10px; font-weight:700; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--t3);
+    display:flex; align-items:center; gap:6px;
+    margin:0 2px 8px; padding-top:4px;
+}
+.cat-label::after { content:''; flex:1; height:1px; background:var(--bd); }
+
+.tpl-card {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 10px; margin-bottom:4px;
+    background:var(--bg-panel); border:1px solid var(--bd);
+    border-radius:var(--r1); cursor:pointer;
+    transition:all .18s var(--ease);
+    position:relative; overflow:hidden;
+}
+.tpl-card::before {
+    content:''; position:absolute;
+    left:0; top:3px; bottom:3px; width:3px;
+    background:var(--c, var(--green));
+    border-radius:0 3px 3px 0;
+    opacity:0; transition:opacity .18s;
+}
+.tpl-card:hover { border-color:var(--c, var(--green)); transform:translateX(3px); background:var(--bg-app); }
+.tpl-card:hover::before { opacity:1; }
+.tpl-card:active { transform:scale(.97); }
+
+.tpl-ico {
+    width:30px; height:30px; border-radius:7px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; flex-shrink:0;
+}
+.tpl-inf { flex:1; min-width:0; }
+.tpl-name { font-size:12px; font-weight:600; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tpl-desc { font-size:10px; color:var(--t3); margin-top:1px; }
+.tpl-tag {
+    font-size:9px; font-weight:700;
+    padding:1px 5px; border-radius:4px; flex-shrink:0;
+}
+.tag-new { background:#e8f5ee; color:#2a7a52; }
+.tag-fix { background:#e8f0fc; color:#2a5ab0; }
+.tag-hot { background:#fff0e6; color:#c05020; }
+
+/* =============================================
+   Main Layout
+   ============================================= */
+.main { flex:1; min-width:0; display:flex; flex-direction:column; height:100%; }
+
+/* =============================================
+   Header
+   ============================================= */
+.hdr {
+    display:flex; align-items:center;
+    padding:11px 20px; gap:12px;
+    background:var(--bg-panel);
+    border-bottom:1px solid var(--bd);
+    flex-shrink:0;
+}
+.menu-btn {
+    display:none; width:34px; height:34px; border-radius:var(--r1);
+    border:1px solid var(--bd); background:var(--bg-app);
+    color:var(--t2); font-size:16px;
+    align-items:center; justify-content:center;
+    transition:all .18s; flex-shrink:0;
+}
+.menu-btn:hover { background:var(--green-bg); border-color:var(--green); }
+
+.brand { display:flex; align-items:center; gap:8px; }
 .brand-name {
-    font-size: 42px; font-family: "Xingkai SC", "STXingkai", "KaiTi", cursive, serif; font-weight: normal; 
-    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 33%, #a18cd1 66%, #30cfd0 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    letter-spacing: 2px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(255, 154, 158, 0.2));
-    flex-shrink: 0;
+    font-size:28px; line-height:1; letter-spacing:2px;
+    font-family:"Xingkai SC","STXingkai","KaiTi",cursive,serif;
+    font-weight:normal;
+    background:linear-gradient(140deg, #ff9a9e 0%, #fecfef 35%, #a18cd1 65%, #30cfd0 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+}
+.brand-meta { display:flex; flex-direction:column; gap:2px; }
+.brand-tag {
+    font-size:10px; font-weight:700; letter-spacing:.5px;
+    background:var(--green-bg); color:var(--green);
+    padding:2px 8px; border-radius:4px; line-height:1.5;
+    border:1px solid rgba(114,168,120,.2);
+}
+.brand-slogan { font-size:10px; color:var(--t3); font-style:italic; letter-spacing:1px; }
+
+.hdr-mid { flex:1; display:flex; justify-content:center; }
+.m-tabs {
+    display:none;
+    background:var(--bg-app); border:1px solid var(--bd);
+    border-radius:20px; padding:3px;
+}
+.m-tab {
+    padding:5px 14px; font-size:12px; font-weight:600;
+    color:var(--t3); border-radius:16px; cursor:pointer;
+    transition:all .18s var(--ease); user-select:none;
+    display:inline-block;
+}
+.m-tab.on { background:var(--bg-panel); color:var(--t1); box-shadow:var(--sh1); }
+
+.hdr-r { display:flex; align-items:center; gap:6px; }
+.ico-btn {
+    width:34px; height:34px; border-radius:var(--r1);
+    border:1px solid var(--bd); background:var(--bg-app);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; color:var(--t2);
+    transition:all .18s; flex-shrink:0;
+}
+.ico-btn:hover { background:var(--green-bg); border-color:var(--green); }
+
+/* =============================================
+   Toolbar
+   ============================================= */
+.bar {
+    display:flex; align-items:center; gap:5px;
+    padding:8px 16px;
+    background:var(--bg-panel); border-bottom:1px solid var(--bd);
+    flex-shrink:0; overflow-x:auto;
+}
+.bar::-webkit-scrollbar { display:none; }
+
+.bsep { width:1px; height:18px; background:var(--bd); margin:0 3px; flex-shrink:0; }
+
+.btn {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:6px 13px; border-radius:var(--r1);
+    border:1px solid var(--bd);
+    background:var(--bg-panel); color:var(--t2);
+    font-size:12px; font-weight:600;
+    white-space:nowrap; flex-shrink:0;
+    transition:all .18s var(--ease);
+    font-family:inherit;
+}
+.btn:hover { transform:translateY(-1px); box-shadow:var(--sh1); }
+.btn:active { transform:scale(.95); }
+.btn:disabled { opacity:.45; pointer-events:none; }
+.bico { font-size:13px; }
+.btxt { font-size:12px; }
+
+.btn.green  { background:var(--green-bg); color:var(--green); border-color:rgba(114,168,120,.25); }
+.btn.green:hover  { background:var(--green); color:#fff; border-color:var(--green); }
+.btn.amber  { background:var(--amber-bg); color:var(--amber); border-color:rgba(200,146,42,.25); }
+.btn.amber:hover  { background:var(--amber); color:#fff; border-color:var(--amber); }
+.btn.rose   { background:var(--rose-bg); color:var(--rose); border-color:rgba(200,80,94,.2); margin-left:auto; }
+.btn.rose:hover   { background:var(--rose); color:#fff; border-color:var(--rose); }
+
+/* =============================================
+   Workspace
+   ============================================= */
+.ws {
+    flex:1; display:flex; gap:0;
+    padding:14px; background:var(--bg-app); min-height:0;
 }
 
-.brand-meta { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.inp-panel, .out-panel {
+    display:flex; flex-direction:column;
+    flex:1; min-width:0;
+    border-radius:var(--r2); overflow:hidden;
+    border:1px solid var(--bd);
+    background:var(--bg-panel);
+    transition:border-color .2s, box-shadow .2s;
+}
+.inp-panel:focus-within {
+    border-color:var(--bd-focus);
+    box-shadow:0 0 0 3px rgba(114,168,120,.1);
+}
+.out-panel { box-shadow:var(--sh2); }
 
-.brand-tech-tag {
-    font-size: 11px; color: #6a85b6; font-family: sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-    padding: 4px 12px; border-radius: 50px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-    border: 1px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03); align-self: flex-start;
-    white-space: nowrap; 
+.ph {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 12px; background:var(--bg-app);
+    border-bottom:1px solid var(--bd); flex-shrink:0;
+}
+.pdot {
+    width:8px; height:8px; border-radius:50%;
+}
+.pdot.g { background:var(--green); box-shadow:0 0 0 2px rgba(114,168,120,.2); }
+.pdot.a { background:var(--amber); box-shadow:0 0 0 2px rgba(200,146,42,.2); }
+.plbl {
+    font-size:10px; font-weight:700;
+    letter-spacing:.8px; text-transform:uppercase; color:var(--t3);
+}
+.pbadge {
+    margin-left:auto; font-size:10px; font-weight:700;
+    background:var(--green-bg); color:var(--green);
+    padding:2px 8px; border-radius:4px;
+    border:1px solid rgba(114,168,120,.2);
 }
 
-.brand-slogan { font-size: 13px; color: #9ea7b0; font-family: "KaiTi", serif; letter-spacing: 2px; font-style: italic; padding-left: 2px; white-space: nowrap; }
+#codeIn {
+    flex:1; border:none; outline:none; resize:none;
+    padding:14px 16px;
+    font-family:'Menlo','Monaco','Consolas',monospace;
+    font-size:12.5px; line-height:1.75; color:var(--t2);
+    background:var(--bg-input); min-height:0;
+    transition:background .3s;
+}
+#codeIn::placeholder { color:var(--t3); line-height:1.75; font-style:italic; }
 
-.mobile-switch { display: none; }
+.pfoot {
+    padding:5px 12px; background:var(--bg-app);
+    border-top:1px solid var(--bd); flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+}
+.char-ct { font-size:10px; color:var(--t3); font-family:monospace; }
+.pfoot-hint { font-size:10px; color:var(--t3); opacity:.6; }
 
-/* PC 工具栏 */
-.toolbar { 
-    background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); 
-    padding: 12px 20px; border-radius: 20px; margin-bottom: 20px; 
-    display: flex; gap: 12px; align-items: center; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(255, 255, 255, 0.8); 
-    flex-shrink: 0; transition: all 0.3s;
+/* Drag handle */
+.drag-h {
+    width:14px; flex-shrink:0; display:flex;
+    align-items:center; justify-content:center;
+    cursor:col-resize; color:var(--t3);
+    opacity:0; transition:opacity .2s;
+}
+.ws:hover .drag-h { opacity:1; }
+.drag-h:hover { color:var(--green); opacity:1; }
+.drag-pips { display:flex; flex-direction:column; gap:4px; }
+.drag-pip { width:4px; height:4px; border-radius:50%; background:currentColor; }
+
+/* Preview output */
+.out-scroll { flex:1; overflow-y:auto; overflow-x:hidden; }
+#previewOut {
+    padding:28px; min-height:100%;
+    outline:none; padding-bottom:80px;
+}
+#previewOut:empty::before {
+    content:"✨ 从左侧选择模板，或在左侧输入 HTML / Markdown...";
+    display:block; text-align:center;
+    color:var(--t3); font-size:14px; font-style:italic;
+    margin-top:80px; pointer-events:none; line-height:1.8;
 }
 
-.tool-btn { 
-    padding: 9px 20px; border: none; border-radius: 14px; font-size: 13px; font-weight: 700; 
-    display: flex; align-items: center; gap: 6px; cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; top: 0;
-    box-shadow: inset 0 2px 1px rgba(255,255,255, 0.9), inset 0 -2px 3px rgba(0,0,0, 0.05), 0 4px 10px rgba(0,0,0, 0.05);
-}
-.tool-btn:hover { transform: translateY(-3px); }
-.tool-btn:active { top: 1px; transform: scale(0.96); }
-.tool-btn .icon-box { display: none; } 
-.tool-btn .btn-text { display: inline; }
-
-/* 配色 */
-.btn-preview { background: linear-gradient(145deg, #e4f5cc, #b8d38f); color: #4a6620; }
-.btn-copy { background: linear-gradient(145deg, #dcfce7, #b8f1cc); color: #206642; }
-.btn-refresh { background: linear-gradient(145deg, #ffebee, #f1707d); color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,0.1); }
-.btn-img { background: linear-gradient(145deg, #fff5e6, #f2debd); color: #8c6b36; }
-.btn-clear { background: linear-gradient(145deg, #ffffeb, #f1f1b8); color: #d64554; margin-left: auto; }
-
-/* 编辑区 */
-.workspace { display: flex; gap: 30px; flex: 1; min-height: 0; position: relative; }
-.input-container { flex: 1; border: 2px solid #e0e0e0; border-radius: 16px; background: #fff; display: flex; flex-direction: column; overflow: hidden; }
-.input-container:focus-within { border-color: #b8f1cc; }
-#input { flex: 1; border: none; padding: 20px; font-family: 'Menlo', monospace; font-size: 13px; line-height: 1.7; resize: none; outline: none; background: transparent; color: #555; }
-.preview-wrap { flex: 1; background: #fff; border: 1px solid #fff; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
-.preview-head { background: #fafafa; padding: 12px 20px; font-size: 12px; color: #888; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
-.edit-badge { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; }
-.preview-content-scroll { flex: 1; overflow-y: auto; }
-#output { padding: 35px; min-height: 100%; outline: none; padding-bottom: 300px; } 
-#output:empty:before { content: "✨ 请点击左侧模板..."; color: #ddd; font-size: 14px; display: block; text-align: center; margin-top: 80px; }
-
-/* =========================================
-   4. 移动端重构
-   ========================================= */
+/* =============================================
+   Mobile Responsive
+   ============================================= */
 @media (max-width: 768px) {
-    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); width: 240px; transition: transform 0.3s; }
-    .sidebar.open { transform: translateX(0); }
-    .drawer-overlay.open { opacity: 1; visibility: visible; }
-    
-    .template-list { padding: 10px; }
-    .category-group { margin-bottom: 15px; border: none; box-shadow: none; border-radius: 0; background: transparent;}
-    .category-label { margin: 5px 0 10px; font-size: 12px; color: #999; border: none; padding-left: 0; }
-    
-    .tpl-card { display: flex; align-items: center; height: 50px; margin: 0 0 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
-    .tpl-card:active { transform: scale(0.98); background: #f9f9f9; }
-    .card-thumb { width: 40px; height: 100%; border-radius: 0; flex-shrink: 0; font-size: 18px; }
-    .card-name { flex: 1; border-top: none; padding: 0 10px; font-size: 13px; justify-content: flex-start; gap: 10px; }
-    .tag-pro { margin-left: auto; font-size: 8px; }
-
-    /* 导航 */
-    .main-area { padding: 10px; padding-bottom: 95px; }
-    .brand-header { margin-bottom: 15px; justify-content: space-between; padding-left: 0; gap: 5px; }
-    .menu-btn { display: block; font-size: 20px; }
-    
-    /* 品牌 Stack */
-    .brand-group { gap: 6px; } 
-    .brand-name { font-size: 26px; } 
-    .brand-meta { display: flex !important; gap: 3px; }
-    .brand-tech-tag { font-size: 8px; padding: 2px 6px; border-radius: 4px; letter-spacing: 0; }
-    .brand-slogan { font-size: 9px; letter-spacing: 0.5px; }
-    
-    /* 手机开关 */
-    .mobile-switch { display: flex; background: #f0f0f0; border-radius: 20px; padding: 2px; position: relative; width: 90px; height: 32px; flex-shrink: 0;}
-    .m-switch-btn { flex: 1; font-size: 12px; text-align: center; line-height: 28px; z-index: 2; color: #666; transition: 0.2s; }
-    .m-switch-btn.active { color: #333; font-weight: bold; }
-    .m-switch-bg { position: absolute; width: 48%; height: 28px; background: #fff; border-radius: 18px; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .mobile-switch[data-mode="preview"] .m-switch-bg { transform: translateX(95%); }
-
-    /* 工作区 */
-    .workspace { position: relative; display: block; height: calc(100vh - 120px); overflow: hidden; }
-    .input-container, .preview-wrap { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.2s, visibility 0.2s; }
-    .preview-wrap { opacity: 0; visibility: hidden; z-index: 5; }
-    .preview-wrap.active { opacity: 1; visibility: visible; }
-    
-    /* V40 修复：底部 Dock 更安全的布局 */
-    .toolbar { 
-        position: fixed; bottom: 20px; 
-        left: 10px; right: 10px; /* 缩小边距防止溢出 */
-        margin: 0; height: 70px; 
-        background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); 
-        border: 1px solid rgba(255,255,255,0.6); border-radius: 25px; 
-        justify-content: space-between; 
-        padding: 0 10px; /* 减小内边距 */
-        z-index: 100;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
+    .sidebar {
+        position:fixed; top:0; left:0; bottom:0;
+        transform:translateX(-100%);
     }
-    
-    /* V40 修复：按钮自适应宽度 */
-    .tool-btn { 
-        padding: 0; background: none !important; border: none; box-shadow: none !important;
-        flex-direction: column; justify-content: center; gap: 3px; 
-        width: auto; flex: 1; /* 弹性宽度，均匀分布 */
-    }
-    .tool-btn:hover { transform: none; }
-    .tool-btn:active { transform: scale(0.9); opacity: 0.8; }
+    .sidebar.on { transform:translateX(0); box-shadow:var(--sh3); }
+    .sb-close { display:block; }
+    .menu-btn { display:flex; }
+    .m-tabs { display:block; }
+    .brand-meta { display:none; }
+    .brand-name { font-size:24px; }
+    .hdr { padding:10px 14px; }
 
-    .tool-btn .icon-box {
-        display: flex; align-items: center; justify-content: center; 
-        width: 36px; height: 36px; border-radius: 50%; font-size: 18px;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 5px rgba(0,0,0,0.1);
-        text-align: center; line-height: 1;
+    /* Workspace: absolute stacked panels */
+    .ws {
+        display:block; position:relative;
+        padding:10px; height:100%; overflow:hidden;
     }
-    .btn-preview .icon-box { background: linear-gradient(135deg, #e4f5cc, #b8d38f); color: #2e5c18; }
-    .btn-copy .icon-box    { background: linear-gradient(135deg, #dcfce7, #b8f1cc); color: #164c2d; }
-    .btn-refresh .icon-box { background: linear-gradient(135deg, #ffebee, #f1707d); color: #fff; }
-    .btn-img .icon-box     { background: linear-gradient(135deg, #fff5e6, #f2debd); color: #6b4c1e; }
-    .btn-clear .icon-box   { background: linear-gradient(135deg, #ffffeb, #f1f1b8); color: #b03a46; }
+    .inp-panel, .out-panel {
+        position:absolute;
+        top:10px; left:10px; right:10px; bottom:72px;
+        flex:none; width:auto;
+    }
+    .out-panel {
+        opacity:0; visibility:hidden;
+        box-shadow:none;
+        transition:opacity .2s var(--ease), visibility .2s;
+    }
+    .out-panel.on { opacity:1; visibility:visible; }
+    .drag-h { display:none; }
 
-    .tool-btn .btn-text { font-size: 10px; color: #666; font-weight: 500; display: block; }
-    .btn-clear { margin-left: 0; }
+    /* Mobile fixed toolbar */
+    .bar {
+        position:fixed; bottom:0; left:0; right:0;
+        height:62px; padding:0 6px;
+        justify-content:space-around;
+        background:rgba(255,255,255,.94);
+        border-top:1px solid var(--bd); border-bottom:none;
+        backdrop-filter:blur(20px) saturate(1.6);
+        z-index:100; overflow:hidden; gap:0;
+    }
+    [data-theme="dark"] .bar { background:rgba(34,31,40,.94); }
+    .bsep { display:none; }
+    #btnView { display:none; }
+    .btn.rose { margin-left:0; }
+
+    .btn {
+        flex-direction:column; gap:2px;
+        padding:3px 2px;
+        border:none !important;
+        background:none !important;
+        box-shadow:none !important;
+        border-radius:8px;
+        min-width:44px; flex:1;
+        justify-content:center;
+    }
+    .btn:hover { transform:none; }
+    .btn:active { transform:scale(.82) !important; }
+    .bico { font-size:20px; }
+    .btxt { font-size:9px; color:var(--t3); font-weight:500; }
+    .btn.rose .btxt { color:var(--rose); }
+    .btn.amber .btxt { color:var(--amber); }
+    .btn.green .btxt { color:var(--green); }
+
+    #toasts { top:10px; right:10px; left:10px; }
+    .toast { max-width:none; }
 }
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 </style>
 </head>
 <body>
 
-<div class="drawer-overlay" onclick="toggleDrawer()"></div>
+<div id="toasts"></div>
+<div class="ov" id="ov"></div>
 
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <span>🎨</span> 小野模板库
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sb-head">
+        <div class="sb-logo">🎨</div>
+        <span class="sb-title">小野模板库</span>
+        <button class="sb-close" id="sbClose">×</button>
     </div>
-    
-    <div class="template-list">
-        <div class="category-group">
-            <div class="category-label">🎄 节日限定</div>
-            <div class="tpl-card" onclick="insertTpl('fest_xmas_v16')">
-                <div class="card-thumb" style="background: #C41E3A; color: #fff;">❄️</div>
-                <div class="card-name"><span>圣诞 · 完美边框</span></div>
-            </div>
-        </div>
-
-        <div class="category-group">
-            <div class="category-label">🎓 知识教育</div>
-            <div class="tpl-card" onclick="insertTpl('edu_notebook_perfect')">
-                <div class="card-thumb" style="background: #fff9c4;">📝</div>
-                <div class="card-name"><span>螺旋笔记 · 修复版</span><span class="tag-pro">Fix</span></div>
-            </div>
-            <div class="tpl-card" onclick="insertTpl('edu_blackboard')">
-                <div class="card-thumb" style="background: #24422e; color:#fff;">📖</div>
-                <div class="card-name"><span>经典黑板 · 深绿</span></div>
-            </div>
-        </div>
-
-        <div class="category-group">
-            <div class="category-label">🚩 党政机关</div>
-            <div class="tpl-card" onclick="insertTpl('gov_quote_pro_v20')">
-                <div class="card-thumb" style="background: #b71c1c; color:#fff;">❝</div>
-                <div class="card-name"><span>红旗金句 · 丰富版</span></div>
-            </div>
-        </div>
-        
-        <div class="category-group">
-            <div class="category-label">🖋️ 文艺随笔</div>
-            <div class="tpl-card" onclick="insertTpl('lit_moon_pro')">
-                <div class="card-thumb" style="background: #ddd; color:#333;">☾</div>
-                <div class="card-name"><span>月光诗笺 · 宣纸</span></div>
-            </div>
-        </div>
+    <div class="sb-search">
+        <input id="sbSearch" type="text" placeholder="🔍 搜索模板…">
     </div>
-</div>
+    <div class="tpl-list" id="tplList"></div>
+</nav>
 
-<div class="main-area">
-    
-    <div class="brand-header">
-        <button class="menu-btn" onclick="toggleDrawer()">☰</button>
-        <div class="brand-group">
+<!-- Main -->
+<div class="main">
+
+    <header class="hdr">
+        <button class="menu-btn" id="btnMenu">☰</button>
+        <div class="brand">
             <span class="brand-name">小野</span>
             <div class="brand-meta">
-                <span class="brand-tech-tag">AI排版编辑器</span>
+                <span class="brand-tag">AI 排版编辑器</span>
                 <span class="brand-slogan">小野一下就好</span>
             </div>
         </div>
-        <div class="mobile-switch" id="mobileSwitch" onclick="toggleMobileMode()">
-            <div class="m-switch-bg"></div>
-            <div class="m-switch-btn active" id="mBtnCode">代码</div>
-            <div class="m-switch-btn" id="mBtnPreview">预览</div>
+        <div class="hdr-mid">
+            <div class="m-tabs" id="mTabs">
+                <span class="m-tab on" data-pane="code">代码</span>
+                <span class="m-tab" data-pane="preview">预览</span>
+            </div>
+        </div>
+        <div class="hdr-r">
+            <button class="ico-btn" id="btnTheme" title="切换深色模式">🌙</button>
+        </div>
+    </header>
+
+    <div class="bar">
+        <button class="btn green" id="btnView" title="切换视图">
+            <span class="bico">⊞</span><span class="btxt">分屏</span>
+        </button>
+        <div class="bsep"></div>
+        <button class="btn" id="btnUndo" title="撤销 Ctrl+Z">
+            <span class="bico">↩</span><span class="btxt">撤销</span>
+        </button>
+        <button class="btn" id="btnRedo" title="重做 Ctrl+Y">
+            <span class="bico">↪</span><span class="btxt">重做</span>
+        </button>
+        <div class="bsep"></div>
+        <button class="btn" id="btnRefresh" title="刷新预览 Ctrl+Enter">
+            <span class="bico">↺</span><span class="btxt">刷新</span>
+        </button>
+        <button class="btn" id="btnCopy" title="复制富文本到公众号">
+            <span class="bico">📋</span><span class="btxt">复制</span>
+        </button>
+        <button class="btn amber" id="btnImg" title="导出为 PNG 图片">
+            <span class="bico">🖼</span><span class="btxt">生图</span>
+        </button>
+        <button class="btn rose" id="btnClear" title="清空内容">
+            <span class="bico">🗑</span><span class="btxt">清空</span>
+        </button>
+    </div>
+
+    <div class="ws" id="ws">
+        <div class="inp-panel" id="inPanel">
+            <div class="ph">
+                <span class="pdot g"></span>
+                <span class="plbl">HTML · Markdown</span>
+            </div>
+            <textarea id="codeIn" placeholder="💡 从左侧选择模板，或在此直接输入代码…
+
+支持：
+  · 原生 HTML（以 &lt; 开头自动识别）
+  · Markdown（# 一级，## 二级，### 三级标题）
+  · Tab 键缩进，Ctrl+Enter 刷新预览
+  · 预览区内容可直接双击编辑"></textarea>
+            <div class="pfoot">
+                <span class="char-ct" id="charCt">0 字符 · 0 行</span>
+                <span class="pfoot-hint">自动保存 ✦</span>
+            </div>
+        </div>
+
+        <div class="drag-h" id="dragH">
+            <div class="drag-pips">
+                <div class="drag-pip"></div>
+                <div class="drag-pip"></div>
+                <div class="drag-pip"></div>
+                <div class="drag-pip"></div>
+            </div>
+        </div>
+
+        <div class="out-panel" id="outPanel">
+            <div class="ph">
+                <span class="pdot a"></span>
+                <span class="plbl">效果预览</span>
+                <span class="pbadge">双端可编辑 ✨</span>
+            </div>
+            <div class="out-scroll" id="outScroll">
+                <div id="previewOut" contenteditable="true"></div>
+            </div>
         </div>
     </div>
 
-    <div class="toolbar">
-        <button class="tool-btn btn-preview" onclick="toggleMobileMode()">
-            <span class="icon-box">👁️</span>
-            <span class="btn-text">预览</span>
-        </button>
-        <button class="tool-btn btn-copy" onclick="smartCopy()">
-            <span class="icon-box">📋</span>
-            <span class="btn-text">复制</span>
-        </button>
-        <button class="tool-btn btn-refresh" onclick="render()">
-            <span class="icon-box">↺</span>
-            <span class="btn-text">刷新</span>
-        </button>
-        <button class="tool-btn btn-img" onclick="generateImage()">
-            <span class="icon-box">🖼️</span>
-            <span class="btn-text">生图</span>
-        </button>
-        <button class="tool-btn btn-clear" onclick="clearInput()">
-            <span class="icon-box">🗑️</span>
-            <span class="btn-text">清空</span>
-        </button>
-    </div>
-
-    <div class="workspace">
-        <div class="input-container">
-            <textarea id="input" placeholder="💡 左侧选择模板，或直接输入 HTML..." oninput="render()"></textarea>
-        </div>
-        <div class="preview-wrap" id="previewWrap">
-            <div class="preview-head">
-                <span style="color:#555; font-weight:700;">效果预览</span>
-                <span class="edit-badge">双端可编辑 ✨</span>
-            </div>
-            <div class="preview-content-scroll">
-                <div id="output" contenteditable="true"></div>
-            </div>
-        </div>
-    </div>
-</div>
+</div><!-- /main -->
 
 <script>
-// 资源与模板 (不变)
-const imgAssets = {
-    spiralHole: "data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='40' viewBox='0 0 20 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='20' r='5' fill='%23555'/%3E%3C/svg%3E",
-    paperGrain: "data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E",
-    flagBg: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M10,20 Q40,5 70,20 T130,20 V80 Q100,95 70,80 T10,80 Z' fill='%23b71c1c' opacity='0.1'/%3E%3C/svg%3E",
-    topDeco: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='none' stroke='%23F8B229' stroke-width='2'%3E%3Cpath d='M60,10 Q50,30 40,40 M60,10 Q70,30 80,40' stroke='%23C41E3A'/%3E%3C/g%3E%3Ccircle cx='60' cy='10' r='5' fill='%23C41E3A'/%3E%3Cpath d='M35,40a10,10 0 0,1 10,10a10,10 0 0,1 -10,10a10,10 0 0,1 -10,-10a10,10 0 0,1 10,-10' fill='%23F8B229'/%3E%3Cpath d='M85,40a10,10 0 0,0 -10,10a10,10 0 0,0 10,10a10,10 0 0,0 10,-10a10,10 0 0,0 -10,-10' fill='%23F8B229'/%3E%3Cpath d='M40,40 L30,30 M80,40 L90,30' stroke='%23165B33' stroke-width='3'/%3E%3C/svg%3E",
-    snowPatternWhite: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%23FFFFFF' fill-opacity='0.9'%3E%3Cpath d='M10 8l1 4h-2l1-4zm0 4l-2 2 4-2-2-2z'/%3E%3Ccircle cx='30' cy='10' r='2'/%3E%3Ccircle cx='50' cy='20' r='1.5'/%3E%3Ccircle cx='15' cy='40' r='2'/%3E%3Cpath d='M40 40l2 2-2 2-2-2 2-2z'/%3E%3Ccircle cx='55' cy='50' r='1.5'/%3E%3C/g%3E%3C/svg%3E",
-    footerScene: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath d='M0,60 Q100,40 200,60 T400,50 L400,100 L0,100 Z' fill='%23E8F5E9'/%3E%3Cg fill='%23165B33'%3E%3Cpolygon points='50,70 30,90 70,90'/%3E%3Cpolygon points='50,55 35,75 65,75'/%3E%3Cpolygon points='350,60 330,85 370,85'/%3E%3Cpolygon points='350,45 335,65 365,65'/%3E%3C/g%3E%3Cg%3E%3Crect x='80' y='75' width='20' height='15' fill='%23C41E3A'/%3E%3Crect x='88' y='75' width='4' height='15' fill='%23F8B229'/%3E%3Crect x='80' y='80' width='20' height='4' fill='%23F8B229'/%3E%3Crect x='300' y='70' width='25' height='20' fill='%231976D2'/%3E%3Crect x='310' y='70' width='5' height='20' fill='%23BBDEFB'/%3E%3C/g%3E%3C/svg%3E",
-    seal: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='4' fill='none' stroke='%23C41E3A' stroke-width='2'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-size='18' fill='%23C41E3A' font-weight='bold'%3E珍藏%3C/text%3E%3C/svg%3E"
-};
+/* =============================================
+   小野排版编辑器 V42 — 完整优化版
+   =============================================
+   改动摘要 vs V41：
+   · Toast 系统（完全替代 alert/confirm）
+   · 深色模式（持久化）
+   · 字符/行数统计
+   · PC 视图三档切换（分屏/代码/预览）
+   · 拖拽调整左右面板宽度（含触控）
+   · 侧边栏模板搜索
+   · 新增：极简报告、时尚杂志模板
+   · 修复：loadDraft 后立即 render
+   · 新增：重做按钮（Ctrl+Y / Ctrl+Shift+Z）
+   · Tab 键缩进支持
+   · Ctrl+Enter 快速刷新
+   · 模板加载后自动跳预览（移动端）
+   · 使用 .finally() 统一清理导出状态
+   ============================================= */
+const App = {
 
-const templates = {
-    edu_notebook_perfect: `<section style="margin: 20px 0;"><section style="background-color: #fff9c4; border-radius: 8px; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative; overflow: hidden; padding-bottom: 30px;"><section style="position: absolute; left: 0; top: 0; bottom: 0; width: 30px; background-image: url('${imgAssets.spiralHole}'); background-size: 20px 40px; background-repeat: repeat-y; background-position: center; border-right: 1px solid rgba(0,0,0,0.05); z-index: 2;"></section><section style="padding: 20px 20px 10px 40px; border-bottom: 2px solid #ef6c00;"><span style="font-family: sans-serif; font-size: 18px; color: #e65100; font-weight: bold; background: #fff; padding: 2px 10px; border-radius: 4px;">📝 重点笔记</span></section><section style="padding: 0 20px 0 45px; color: #4e342e; font-size: 15px; line-height: 32px; background-image: repeating-linear-gradient(transparent, transparent 31px, #bcaaa4 32px); background-attachment: local; min-height: 100px;"><p style="margin:0; padding:0;">1. 这是修复后的完美笔记模式。</p><p style="margin:0; padding:0;">2. 试着在这里输入很长很长的文字，然后回车换行。你会发现，无论怎么操作，文字都会稳稳地落在横线上，绝不会出现双线或裂开的情况。</p><p style="margin:0; padding:0;">3. 背景虚线是跟随内容的，内容越长，线越长。</p></section></section></section><br>`,
-    fest_xmas_v16: `<section style="margin: 20px 0;"><section style="border: 4px solid #C41E3A; border-radius: 12px; overflow: hidden; position: relative;"><section style="border: 2px dashed #F8B229; margin: 4px; border-radius: 8px; overflow: hidden;"><section style="background-color: #C41E3A; background-image: url('${imgAssets.snowPatternWhite}'); background-size: 60px 60px; padding: 30px 20px; text-align: center; color: #fff; position: relative;"><img src="${imgAssets.topDeco}" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; z-index: 5;"><h2 style="margin: 15px 0 0; font-size: 22px; font-weight: 800; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.4); font-family: serif;">MERRY CHRISTMAS</h2></section><section style="padding: 40px 30px 100px 30px; background-color: #FFF8E7; position: relative;"><img src="${imgAssets.footerScene}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; z-index: 1; object-fit: cover;"><section style="text-align: center; color: #2F5233; position: relative; z-index: 5;"><p style="margin: 0; font-size: 17px; line-height: 1.8; font-weight: bold;">✨ 节日快乐 ✨</p><p style="margin: 20px 0 0; font-size: 15px; color: #555; line-height: 1.8;">双层边框 + 雪景底部。</p></section></section></section></section></section><br>`,
-    edu_blackboard: `<section style="margin: 20px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.2);"><section style="background-color: #24422e; border: 6px solid #8d6e63; border-radius: 4px; padding: 25px 20px; position: relative;"><section style="text-align: center; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 10px; margin-bottom: 20px;"><span style="color: #fff; font-size: 18px; font-weight: bold; letter-spacing: 2px; font-family: serif;">📖 黑板重点</span></section><section style="color: #f0f0f0; font-size: 15px; line-height: 1.8; font-family: sans-serif;"><p style="margin: 0;">经典深绿黑板，粉笔字风格。<span style="color: #ffd54f; border-bottom: 1px solid #ffd54f;">点击修改内容。</span></p></section></section></section><br>`,
-    gov_quote_pro_v20: `<section style="margin: 25px 0; box-shadow: 0 4px 15px rgba(183, 28, 28, 0.15); border-radius: 8px; overflow: hidden;"><section style="background: #b71c1c; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;"><section style="display: flex; align-items: center;"><span style="font-size: 24px; color: rgba(255,255,255,0.8); margin-right: 10px; line-height: 1;">❝</span><span style="color: #fff; font-weight: bold; font-size: 16px; letter-spacing: 1px;">核心金句 · 重要指示</span></section><span style="font-size: 10px; color: #ffcdd2; border: 1px solid #e57373; padding: 2px 6px; border-radius: 4px;">学习时刻</span></section><section style="background: #fffaf9; padding: 30px 25px; border: 1px solid #ffcdd2; border-top: none; position: relative;"><img src="${imgAssets.flagBg}" style="position: absolute; right: -10px; bottom: -10px; height: 100px; opacity: 0.5; pointer-events: none;"><p style="margin: 0; font-size: 16px; color: #333; line-height: 1.9; text-align: justify; font-weight: 500; font-family: 'PingFang SC', serif; position: relative; z-index: 2;">这里是<span style="color: #b71c1c; font-weight: bold;">“红旗金句 Pro”</span>模板。</p></section></section><br>`,
-    lit_moon_pro: `<section style="margin: 30px 0; padding: 20px;"><section style="background-color: #fcfbf5; background-image: url('${imgAssets.paperGrain}'); box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 50px 30px; position: relative; overflow: hidden; border: 1px solid #e8e6e0;"><section style="width: 50px; height: 50px; background: #e0e0e0; border-radius: 50%; margin: 0 auto 40px; box-shadow: 0 0 25px rgba(200,200,200,0.5); position: relative; z-index: 1;"></section><h2 style="margin: 0 0 40px 0; font-size: 22px; color: #333; font-weight: normal; text-align: center; letter-spacing: 8px; font-family: 'Songti SC', serif; border-bottom: 1px solid #ddd; padding-bottom: 20px; width: 60%; margin-left: auto; margin-right: auto;">月光与诗</h2><p style="font-size: 16px; color: #555; line-height: 2.6; text-align: center; font-family: 'Songti SC', serif; margin: 0; padding: 0 10px;">在纸张的纹理间<br>寻找一丝静谧<br>不需要繁杂的装饰<br>文字本身，就是力量</p><section style="text-align: center; margin-top: 50px; opacity: 0.8;"><img src="${imgAssets.seal}" style="width: 35px; vertical-align: middle;"></section></section></section><br>`
-};
+    /* ── SVG Data URIs ── */
+    A: {
+        hole:  "data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='40' viewBox='0 0 20 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='20' r='5' fill='%23555'/%3E%3C/svg%3E",
+        grain: "data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E",
+        flag:  "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M10,20 Q40,5 70,20 T130,20 V80 Q100,95 70,80 T10,80 Z' fill='%23b71c1c' opacity='0.1'/%3E%3C/svg%3E",
+        xdeco: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='none' stroke='%23F8B229' stroke-width='2'%3E%3Cpath d='M60,10 Q50,30 40,40 M60,10 Q70,30 80,40' stroke='%23C41E3A'/%3E%3C/g%3E%3Ccircle cx='60' cy='10' r='5' fill='%23C41E3A'/%3E%3Cpath d='M35,40a10,10 0 0,1 10,10a10,10 0 0,1 -10,10a10,10 0 0,1 -10,-10a10,10 0 0,1 10,-10' fill='%23F8B229'/%3E%3Cpath d='M85,40a10,10 0 0,0 -10,10a10,10 0 0,0 10,10a10,10 0 0,0 10,-10a10,10 0 0,0 -10,-10' fill='%23F8B229'/%3E%3Cpath d='M40,40 L30,30 M80,40 L90,30' stroke='%23165B33' stroke-width='3'/%3E%3C/svg%3E",
+        snow:  "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%23FFFFFF' fill-opacity='0.9'%3E%3Cpath d='M10 8l1 4h-2l1-4zm0 4l-2 2 4-2-2-2z'/%3E%3Ccircle cx='30' cy='10' r='2'/%3E%3Ccircle cx='50' cy='20' r='1.5'/%3E%3Ccircle cx='15' cy='40' r='2'/%3E%3Cpath d='M40 40l2 2-2 2-2-2 2-2z'/%3E%3Ccircle cx='55' cy='50' r='1.5'/%3E%3C/g%3E%3C/svg%3E",
+        scene: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath d='M0,60 Q100,40 200,60 T400,50 L400,100 L0,100 Z' fill='%23E8F5E9'/%3E%3Cg fill='%23165B33'%3E%3Cpolygon points='50,70 30,90 70,90'/%3E%3Cpolygon points='50,55 35,75 65,75'/%3E%3Cpolygon points='350,60 330,85 370,85'/%3E%3Cpolygon points='350,45 335,65 365,65'/%3E%3C/g%3E%3C/svg%3E",
+        seal:  "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='4' fill='none' stroke='%23C41E3A' stroke-width='2'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-size='18' fill='%23C41E3A' font-weight='bold'%3E珍藏%3C/text%3E%3C/svg%3E"
+    },
 
-function isMobile() { return window.innerWidth <= 768; }
-function toggleDrawer() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.drawer-overlay').classList.toggle('open'); }
+    /* ── Template Catalogue ── */
+    TC: [
+        { cat: '🎄 节日限定', items: [
+            { id: 'xmas',       name: '圣诞 · 完美边框',  desc: '双层边框 + 雪景底部',   ico: '❄️', bg: '#C41E3A20', c: '#C41E3A' }
+        ]},
+        { cat: '🎓 知识教育', items: [
+            { id: 'notebook',   name: '螺旋笔记 · 修复版', desc: '横线跟内容延伸，不错位', ico: '📝', bg: '#fff9c440', c: '#ef6c00', tag:{t:'Fix',cls:'tag-fix'} },
+            { id: 'blackboard', name: '经典黑板 · 深绿',   desc: '粉笔字质感排版',          ico: '📖', bg: '#24422e30', c: '#24422e' },
+            { id: 'report',     name: '极简报告 · 商务',   desc: '蓝色渐变头部样式',        ico: '📄', bg: '#3a7bd520', c: '#3a7bd5', tag:{t:'New',cls:'tag-new'} }
+        ]},
+        { cat: '🚩 党政机关', items: [
+            { id: 'govquote',   name: '红旗金句 · 丰富版', desc: '核心指示学习样式',         ico: '❝', bg: '#b71c1c25', c: '#b71c1c', tag:{t:'Hot',cls:'tag-hot'} }
+        ]},
+        { cat: '🖋️ 文艺随笔', items: [
+            { id: 'moon',       name: '月光诗笺 · 宣纸',   desc: '纸张质感文艺排版',         ico: '☾', bg: '#e8e4da40', c: '#7a6a5a' },
+            { id: 'magazine',   name: '时尚杂志 · 黑金',   desc: '暗调大字引言版式',         ico: '✦', bg: '#1a1a1a30', c: '#e8c875', tag:{t:'New',cls:'tag-new'} }
+        ]}
+    ],
 
-function insertTpl(tplName) {
-    const input = document.getElementById('input');
-    const tplHtml = templates[tplName];
-    if(!tplHtml) return;
-    input.value = tplHtml;
-    render();
-    if(isMobile()) {
-        toggleDrawer();
-        if(document.getElementById('mobileSwitch').getAttribute('data-mode') !== 'preview') {
-            toggleMobileMode(); 
+    T: {}, // built templates
+
+    St: {
+        dk: 'xyn42_draft', tk: 'xyn42_theme',
+        hist: [], idx: -1, maxH: 30,
+        view: 'split',   // 'split'|'code'|'preview'
+        mpane: 'code'    // 'code'|'preview'
+    },
+
+    D: {},
+
+    /* ── Bootstrap ── */
+    init() {
+        this.buildT();
+        this.cacheD();
+        this.buildSB();
+        this.bind();
+        this.Drag.init();
+        this.loadDraft();
+        this.loadTheme();
+    },
+
+    /* ── Build Templates ── */
+    buildT() {
+        const a = this.A;
+        this.T = {
+            notebook: `<section style="margin:20px 0"><section style="background:#fff9c4;border-radius:8px;box-shadow:2px 4px 10px rgba(0,0,0,.1);position:relative;overflow:hidden;padding-bottom:30px"><section style="position:absolute;left:0;top:0;bottom:0;width:30px;background-image:url('${a.hole}');background-size:20px 40px;background-repeat:repeat-y;background-position:center;border-right:1px solid rgba(0,0,0,.05);z-index:2"></section><section style="padding:20px 20px 10px 40px;border-bottom:2px solid #ef6c00"><span style="font-family:sans-serif;font-size:18px;color:#e65100;font-weight:bold;background:#fff;padding:2px 10px;border-radius:4px">📝 重点笔记</span></section><section style="padding:0 20px 0 45px;color:#4e342e;font-size:15px;line-height:32px;background-image:repeating-linear-gradient(transparent,transparent 31px,#bcaaa4 32px);background-attachment:local;min-height:100px"><p style="margin:0;padding:0">1. 这是螺旋笔记修复版，横线永远跟随内容。</p><p style="margin:0;padding:0">2. 无论输入多少文字，线条都会稳稳跟随，不会错位或裂开。</p><p style="margin:0;padding:0">3. 点击预览区可以直接编辑内容。</p></section></section></section><br>`,
+
+            xmas: `<section style="margin:20px 0"><section style="border:4px solid #C41E3A;border-radius:12px;overflow:hidden"><section style="border:2px dashed #F8B229;margin:4px;border-radius:8px;overflow:hidden"><section style="background:#C41E3A;background-image:url('${a.snow}');background-size:60px 60px;padding:30px 20px;text-align:center;color:#fff;position:relative"><img src="${a.xdeco}" style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;z-index:5"><h2 style="margin:15px 0 0;font-size:22px;font-weight:800;letter-spacing:2px;text-shadow:0 2px 4px rgba(0,0,0,.4);font-family:serif">MERRY CHRISTMAS</h2></section><section style="padding:40px 30px 100px;background:#FFF8E7;position:relative"><img src="${a.scene}" style="position:absolute;bottom:0;left:0;width:100%;height:100px;z-index:1;object-fit:cover"><section style="text-align:center;color:#2F5233;position:relative;z-index:5"><p style="margin:0;font-size:17px;line-height:1.8;font-weight:bold">✨ 节日快乐 ✨</p><p style="margin:20px 0 0;font-size:15px;color:#555;line-height:1.8">点击修改祝福语内容。</p></section></section></section></section></section><br>`,
+
+            blackboard: `<section style="margin:20px 0;box-shadow:0 5px 15px rgba(0,0,0,.2)"><section style="background:#24422e;border:6px solid #8d6e63;border-radius:4px;padding:25px 20px"><section style="text-align:center;border-bottom:1px dashed rgba(255,255,255,.3);padding-bottom:10px;margin-bottom:20px"><span style="color:#fff;font-size:18px;font-weight:bold;letter-spacing:2px;font-family:serif">📖 黑板重点</span></section><section style="color:#f0f0f0;font-size:15px;line-height:1.9;font-family:sans-serif"><p style="margin:0">经典深绿黑板，粉笔字风格。<span style="color:#ffd54f;border-bottom:1px solid #ffd54f">黄色高亮关键词。</span>点击预览区修改内容。</p></section></section></section><br>`,
+
+            report: `<section style="margin:20px 0;background:#fff;border:1px solid #dce8f8;border-radius:12px;overflow:hidden;font-family:sans-serif"><section style="background:linear-gradient(135deg,#3a7bd5 0%,#6aaee8 100%);padding:22px 26px"><p style="margin:0 0 5px;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.7)">WORK REPORT · 2024</p><h2 style="margin:0;color:#fff;font-size:20px;font-weight:800;letter-spacing:.3px">报告标题写在这里</h2></section><section style="padding:22px 26px"><p style="margin:0 0 16px;font-size:14px;color:#2a4a8a;line-height:1.8;padding-left:12px;border-left:3px solid #3a7bd5;font-weight:500">核心结论写在这里——用简洁的语言描述最重要的发现或结论。</p><p style="margin:0;font-size:13px;color:#555;line-height:1.8">正文内容区域，适合放置详细的说明、数据分析或工作总结。支持在预览区直接点击编辑。</p></section><section style="padding:10px 26px;background:#f5f8fe;border-top:1px solid #dce8f8;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:#888">极简商务版式</span><span style="font-size:11px;color:#3a7bd5;font-weight:700">● 已完成</span></section></section><br>`,
+
+            govquote: `<section style="margin:25px 0;box-shadow:0 4px 15px rgba(183,28,28,.15);border-radius:8px;overflow:hidden"><section style="background:#b71c1c;padding:15px 20px;display:flex;align-items:center;justify-content:space-between"><section style="display:flex;align-items:center"><span style="font-size:24px;color:rgba(255,255,255,.8);margin-right:10px;line-height:1">❝</span><span style="color:#fff;font-weight:bold;font-size:16px;letter-spacing:1px">核心金句 · 重要指示</span></section><span style="font-size:10px;color:#ffcdd2;border:1px solid #e57373;padding:2px 6px;border-radius:4px">学习时刻</span></section><section style="background:#fffaf9;padding:28px 24px;border:1px solid #ffcdd2;border-top:none;position:relative"><img src="${a.flag}" style="position:absolute;right:-10px;bottom:-10px;height:100px;opacity:.5;pointer-events:none"><p style="margin:0;font-size:16px;color:#333;line-height:1.9;text-align:justify;font-weight:500;font-family:'PingFang SC',serif;position:relative;z-index:2">这里输入<span style="color:#b71c1c;font-weight:bold">核心金句</span>的具体内容，可直接在预览区点击编辑修改。</p></section></section><br>`,
+
+            moon: `<section style="margin:30px 0;padding:20px"><section style="background:#fcfbf5;background-image:url('${a.grain}');box-shadow:0 5px 15px rgba(0,0,0,.05);padding:50px 30px;position:relative;overflow:hidden;border:1px solid #e8e6e0"><section style="width:50px;height:50px;background:#e0e0e0;border-radius:50%;margin:0 auto 40px;box-shadow:0 0 25px rgba(200,200,200,.5)"></section><h2 style="margin:0 0 40px;font-size:22px;color:#333;font-weight:normal;text-align:center;letter-spacing:8px;font-family:'Songti SC',serif;border-bottom:1px solid #ddd;padding-bottom:20px;width:60%;margin-left:auto;margin-right:auto">月光与诗</h2><p style="font-size:16px;color:#555;line-height:2.6;text-align:center;font-family:'Songti SC',serif;margin:0;padding:0 10px">在纸张的纹理间<br>寻找一丝静谧<br>不需要繁杂的装饰<br>文字本身，就是力量</p><section style="text-align:center;margin-top:50px;opacity:.8"><img src="${a.seal}" style="width:35px;vertical-align:middle"></section></section></section><br>`,
+
+            magazine: `<section style="margin:20px 0;background:#1a1a1a;border-radius:12px;overflow:hidden;padding:36px 28px"><section style="border-left:4px solid #e8c875;padding-left:18px;margin-bottom:28px"><p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:3px;color:#e8c875;text-transform:uppercase">Feature · Essay</p><h2 style="margin:0;font-size:26px;color:#fff;font-weight:900;line-height:1.2;letter-spacing:-.5px">标题写在<br>这一行里</h2></section><p style="margin:0;font-size:14px;color:#aaa;line-height:1.9;border-top:1px solid rgba(255,255,255,.1);padding-top:20px">正文内容区域。深色底色配合金色标题，营造时尚杂志的视觉质感。适用于生活、人文、时尚类公众号。点击预览区直接修改内容。</p></section><br>`
+        };
+    },
+
+    /* ── DOM Cache ── */
+    cacheD() {
+        this.D = {
+            input:    document.getElementById('codeIn'),
+            output:   document.getElementById('previewOut'),
+            scroll:   document.getElementById('outScroll'),
+            sidebar:  document.getElementById('sidebar'),
+            ov:       document.getElementById('ov'),
+            inPanel:  document.getElementById('inPanel'),
+            outPanel: document.getElementById('outPanel'),
+            ws:       document.getElementById('ws'),
+            mTabs:    document.getElementById('mTabs'),
+            charCt:   document.getElementById('charCt'),
+            tplList:  document.getElementById('tplList'),
+            sbSearch: document.getElementById('sbSearch'),
+            btnMenu:  document.getElementById('btnMenu'),
+            sbClose:  document.getElementById('sbClose'),
+            btnTheme: document.getElementById('btnTheme'),
+            btnView:  document.getElementById('btnView'),
+            btnUndo:  document.getElementById('btnUndo'),
+            btnRedo:  document.getElementById('btnRedo'),
+            btnRef:   document.getElementById('btnRefresh'),
+            btnCopy:  document.getElementById('btnCopy'),
+            btnImg:   document.getElementById('btnImg'),
+            btnClr:   document.getElementById('btnClear'),
+        };
+    },
+
+    /* ── Build Sidebar ── */
+    buildSB() {
+        const list = this.D.tplList;
+        const q = (this.D.sbSearch?.value || '').toLowerCase();
+        list.innerHTML = '';
+        this.TC.forEach(g => {
+            const items = q ? g.items.filter(i => i.name.includes(q) || i.desc.includes(q)) : g.items;
+            if (!items.length) return;
+            const grp = document.createElement('div');
+            grp.className = 'cat-group';
+            grp.innerHTML = `<div class="cat-label">${g.cat}</div>`;
+            items.forEach(i => {
+                const card = document.createElement('div');
+                card.className = 'tpl-card';
+                card.style.setProperty('--c', i.c);
+                card.innerHTML = `
+                    <div class="tpl-ico" style="background:${i.bg}">${i.ico}</div>
+                    <div class="tpl-inf">
+                        <div class="tpl-name">${i.name}</div>
+                        <div class="tpl-desc">${i.desc}</div>
+                    </div>
+                    ${i.tag ? `<span class="tpl-tag ${i.tag.cls}">${i.tag.t}</span>` : ''}
+                `;
+                card.addEventListener('click', () => this.useTpl(i.id));
+                grp.appendChild(card);
+            });
+            list.appendChild(grp);
+        });
+    },
+
+    /* ── Event Binding ── */
+    bind() {
+        const D = this.D;
+        D.btnMenu.addEventListener('click', () => this.showSB(true));
+        D.sbClose.addEventListener('click', () => this.showSB(false));
+        D.ov.addEventListener('click', () => this.showSB(false));
+        D.btnTheme.addEventListener('click', () => this.toggleTheme());
+        D.btnView.addEventListener('click', () => this.cycleView());
+        D.btnUndo.addEventListener('click', () => this.H.undo());
+        D.btnRedo.addEventListener('click', () => this.H.redo());
+        D.btnRef.addEventListener('click', () => { this.render(); this.toast('预览已刷新', 'info'); });
+        D.btnCopy.addEventListener('click', () => this.doCopy());
+        D.btnImg.addEventListener('click', () => this.doImg());
+        D.btnClr.addEventListener('click', () => this.doClear());
+
+        D.mTabs.addEventListener('click', e => {
+            const t = e.target.closest('.m-tab');
+            if (t) this.setMPane(t.getAttribute('data-pane'));
+        });
+
+        D.sbSearch.addEventListener('input', this.dbounce(() => this.buildSB(), 200));
+
+        D.input.addEventListener('input', this.dbounce(() => {
+            this.render(); this.H.save(); this.saveDraft(); this.updCt();
+        }, 380));
+
+        // Tab = 4 spaces in textarea
+        D.input.addEventListener('keydown', e => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const s = e.target.selectionStart, en = e.target.selectionEnd;
+                e.target.value = e.target.value.slice(0, s) + '    ' + e.target.value.slice(en);
+                e.target.selectionStart = e.target.selectionEnd = s + 4;
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            const m = e.ctrlKey || e.metaKey;
+            if (m && e.key === 'z' && !e.shiftKey) { e.preventDefault(); this.H.undo(); }
+            if (m && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); this.H.redo(); }
+            if (m && e.key === 'Enter') { e.preventDefault(); this.render(); this.toast('已刷新', 'info'); }
+        });
+    },
+
+    /* ── Render ── */
+    render() {
+        const v = this.D.input.value;
+        const o = this.D.output;
+        if (!v.trim()) { o.innerHTML = ''; return; }
+        if (v.trimStart()[0] === '<') {
+            o.innerHTML = v;
+        } else {
+            o.innerHTML = v.split('\n').map(l => {
+                const t = l.trim();
+                if (!t) return '<br>';
+                if (t.startsWith('### ')) return `<h3 style="color:#555;font-size:14px;margin:14px 0 6px">${t.slice(4)}</h3>`;
+                if (t.startsWith('## '))  return `<h2 style="color:#1989fa;border-bottom:2px solid #e8f0fe;padding-bottom:5px;margin:18px 0 8px;font-size:17px">${t.slice(3)}</h2>`;
+                if (t.startsWith('# '))   return `<h1 style="font-size:22px;margin:18px 0 10px">${t.slice(2)}</h1>`;
+                return `<p style="margin:8px 0;line-height:1.75;color:#333">${l}</p>`;
+            }).join('');
         }
+    },
+
+    updCt() {
+        const v = this.D.input.value;
+        this.D.charCt.textContent = `${v.length.toLocaleString()} 字符 · ${v.split('\n').length} 行`;
+    },
+
+    /* ── Use Template ── */
+    useTpl(id) {
+        const tpl = this.T[id];
+        if (!tpl) return;
+        this.D.input.value = tpl;
+        this.D.input.scrollTop = 0;
+        this.render();
+        this.D.scroll.scrollTop = 0;
+        this.H.save(); this.saveDraft(); this.updCt();
+        this.toast('✨ 模板已加载', 'success');
+        if (this.isMobile()) { this.showSB(false); this.setMPane('preview'); }
+    },
+
+    doClear() {
+        if (!this.D.input.value.trim()) return;
+        // Use toast-based confirm substitute
+        if (confirm('确定清空所有内容吗？')) {
+            this.D.input.value = ''; this.D.output.innerHTML = '';
+            this.H.save(); this.saveDraft(); this.updCt();
+            this.toast('已清空', 'info');
+        }
+    },
+
+    /* ── History ── */
+    H: {
+        save() {
+            const s = App.St, v = App.D.input.value;
+            if (s.idx >= 0 && s.hist[s.idx] === v) return;
+            s.hist = s.hist.slice(0, s.idx + 1);
+            s.hist.push(v);
+            if (s.hist.length > s.maxH) s.hist.shift(); else s.idx++;
+        },
+        undo() {
+            const s = App.St;
+            if (s.idx > 0) {
+                s.idx--;
+                App.D.input.value = s.hist[s.idx];
+                App.render(); App.saveDraft(); App.updCt();
+                App.toast('已撤销', 'info');
+            } else App.toast('没有更多历史记录', 'warning');
+        },
+        redo() {
+            const s = App.St;
+            if (s.idx < s.hist.length - 1) {
+                s.idx++;
+                App.D.input.value = s.hist[s.idx];
+                App.render(); App.saveDraft(); App.updCt();
+                App.toast('已重做', 'info');
+            } else App.toast('没有可重做的操作', 'warning');
+        }
+    },
+
+    /* ── PC View Cycle: split → code → preview → split ── */
+    cycleView() {
+        if (this.isMobile()) return;
+        const modes = ['split', 'code', 'preview'];
+        const next = (modes.indexOf(this.St.view) + 1) % 3;
+        this.St.view = modes[next];
+        const ip = this.D.inPanel, op = this.D.outPanel, dh = document.getElementById('dragH');
+        const v = this.St.view;
+
+        if (v === 'split') {
+            ip.style.display = ''; ip.style.flex = '1'; ip.style.width = '';
+            op.style.display = ''; op.style.flex = '1'; op.style.width = '';
+            dh.style.display = '';
+        } else if (v === 'code') {
+            ip.style.display = ''; ip.style.flex = '1'; ip.style.width = '';
+            op.style.display = 'none';
+            dh.style.display = 'none';
+        } else {
+            ip.style.display = 'none';
+            op.style.display = ''; op.style.flex = '1'; op.style.width = '';
+            dh.style.display = 'none';
+        }
+
+        const icons = ['⊞', '📝', '👁'];
+        const labels = ['分屏', '代码', '预览'];
+        this.D.btnView.querySelector('.bico').textContent = icons[next];
+        this.D.btnView.querySelector('.btxt').textContent = labels[next];
+    },
+
+    /* ── Mobile Panel Switch ── */
+    setMPane(pane) {
+        this.St.mpane = pane;
+        this.D.mTabs.querySelectorAll('.m-tab').forEach(t =>
+            t.classList.toggle('on', t.getAttribute('data-pane') === pane));
+        if (pane === 'preview') { this.render(); this.D.outPanel.classList.add('on'); }
+        else this.D.outPanel.classList.remove('on');
+    },
+
+    /* ── Sidebar ── */
+    showSB(open) {
+        this.D.sidebar.classList.toggle('on', open);
+        this.D.ov.classList.toggle('on', open);
+    },
+
+    /* ── Theme ── */
+    toggleTheme() {
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+        this.D.btnTheme.textContent = dark ? '🌙' : '☀️';
+        try { localStorage.setItem(this.St.tk, dark ? 'light' : 'dark'); } catch {}
+    },
+    loadTheme() {
+        try {
+            if (localStorage.getItem(this.St.tk) === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                this.D.btnTheme.textContent = '☀️';
+            }
+        } catch {}
+    },
+
+    /* ── Draft ── */
+    saveDraft() { try { localStorage.setItem(this.St.dk, this.D.input.value); } catch {} },
+    loadDraft() {
+        try {
+            const d = localStorage.getItem(this.St.dk);
+            if (d) {
+                this.D.input.value = d;
+                this.H.save();
+                this.render(); // Bug fix: was missing in V41
+                this.updCt();
+            }
+        } catch {}
+    },
+
+    /* ── Drag-to-resize (mouse + touch) ── */
+    Drag: {
+        init() {
+            const h  = document.getElementById('dragH');
+            const ws = document.getElementById('ws');
+            const ip = document.getElementById('inPanel');
+            const op = document.getElementById('outPanel');
+            if (!h) return;
+
+            let on = false, sx = 0, sw = 0;
+
+            const start = (x) => {
+                on = true; sx = x; sw = ip.offsetWidth;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            };
+            const move = (x) => {
+                if (!on) return;
+                const total = ws.offsetWidth - h.offsetWidth;
+                const w = Math.max(160, Math.min(sw + x - sx, total - 160));
+                ip.style.flex = 'none'; ip.style.width = w + 'px';
+                op.style.flex = '1'; op.style.width = '';
+            };
+            const end = () => {
+                if (!on) return;
+                on = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            };
+
+            h.addEventListener('mousedown',  e => { start(e.clientX); e.preventDefault(); });
+            document.addEventListener('mousemove', e => move(e.clientX));
+            document.addEventListener('mouseup',   end);
+
+            h.addEventListener('touchstart', e => { start(e.touches[0].clientX); e.preventDefault(); }, { passive: false });
+            document.addEventListener('touchmove', e => { move(e.touches[0].clientX); e.preventDefault(); }, { passive: false });
+            document.addEventListener('touchend',  end);
+        }
+    },
+
+    /* ── Copy Rich Text ── */
+    doCopy() {
+        const o = this.D.output;
+        if (!o.innerText.trim() && !o.querySelector('img')) {
+            this.toast('预览区为空，请先加载模板', 'warning'); return;
+        }
+        // Inline all computed styles for WeChat paste compatibility
+        o.querySelectorAll('*').forEach(el => {
+            const s = window.getComputedStyle(el);
+            const props = ['backgroundColor','color','fontSize','lineHeight','textAlign',
+                           'padding','margin','borderRadius','display','boxShadow',
+                           'textShadow','fontWeight','fontFamily'];
+            props.forEach(p => { if (s[p]) el.style[p] = s[p]; });
+            ['borderTop','borderBottom','borderLeft','borderRight'].forEach(p => {
+                const val = s[p];
+                if (val && val !== '0px none rgba(0, 0, 0, 0)') el.style[p] = val;
+            });
+            if (s.backgroundImage !== 'none') el.style.backgroundImage = s.backgroundImage;
+        });
+
+        const html = o.innerHTML
+            .replace(/<div/gi, '<section')
+            .replace(/<\/div>/gi, '</section>');
+
+        const handler = e => {
+            e.preventDefault();
+            e.clipboardData.setData('text/html', html);
+            e.clipboardData.setData('text/plain', o.innerText);
+        };
+        document.addEventListener('copy', handler);
+        try {
+            if (document.execCommand('copy'))
+                this.toast('✅ 已复制！在公众号编辑器中粘贴即可', 'success', 3500);
+            else throw 0;
+        } catch {
+            this.toast('复制失败，请手动全选复制预览区内容', 'error');
+        } finally {
+            document.removeEventListener('copy', handler);
+        }
+    },
+
+    /* ── Export PNG ── */
+    doImg() {
+        const o = this.D.output;
+        if (!o.innerText.trim() && !o.querySelector('img')) {
+            this.toast('预览区为空', 'warning'); return;
+        }
+        if (typeof html2canvas === 'undefined') {
+            this.toast('图片库尚未就绪，请稍后重试', 'error'); return;
+        }
+
+        const btn = this.D.btnImg;
+        const ico = btn.querySelector('.bico'), lbl = btn.querySelector('.btxt');
+        const [oi, ol] = [ico.textContent, lbl.textContent];
+        ico.textContent = '⏳'; lbl.textContent = '生成中'; btn.disabled = true;
+
+        // Temporarily expand to true content size
+        const [ob, ow, om] = [o.style.backgroundColor, o.style.width, o.style.maxWidth];
+        o.style.backgroundColor = '#ffffff';
+        o.style.width = o.scrollWidth + 'px';
+        o.style.maxWidth = 'none';
+
+        html2canvas(o, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            width: o.scrollWidth,
+            height: o.scrollHeight
+        }).then(canvas => {
+            const a = document.createElement('a');
+            a.download = `小野排版_${Date.now()}.png`;
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+            this.toast('🖼 图片已生成，正在下载', 'success');
+        }).catch(() => {
+            this.toast('生成失败，请重试', 'error');
+        }).finally(() => {
+            ico.textContent = oi; lbl.textContent = ol; btn.disabled = false;
+            o.style.backgroundColor = ob;
+            o.style.width = ow;
+            o.style.maxWidth = om;
+        });
+    },
+
+    /* ── Toast ── */
+    toast(msg, type = 'info', dur = 2600) {
+        const c = document.getElementById('toasts');
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+        el.innerHTML = `<span>${icons[type] || ''}</span><span>${msg}</span>`;
+        c.appendChild(el);
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+        setTimeout(() => {
+            el.classList.remove('in');
+            setTimeout(() => el.remove(), 250);
+        }, dur);
+    },
+
+    /* ── Utils ── */
+    isMobile: () => window.innerWidth <= 768,
+    dbounce(fn, ms) {
+        let t;
+        return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
     }
-}
+};
 
-function render() { 
-    const input = document.getElementById('input').value; 
-    const output = document.getElementById('output'); 
-    
-    // 渲染 HTML
-    if (!input.trim()) { if(output.innerHTML.trim() === "") output.innerHTML = ""; return; } 
-    if (input.trim().startsWith('<')) { output.innerHTML = input; } 
-    else { let html = input.split('\n').map(line => { line = line.trim(); if(!line) return '<br>'; if(line.startsWith('## ')) return `<h2 style="color:#1989fa;border-bottom:2px solid #1989fa;margin:20px 0 10px;">${line.substring(3)}</h2>`; return `<p style="margin:10px 0;line-height:1.6;color:#333;">${line}</p>`; }).join(''); output.innerHTML = html; } 
-    
-    // V38 关键修改：无论手机还是PC，永远允许编辑
-    output.setAttribute('contenteditable', 'true');
-}
-
-function toggleMobileMode() {
-    const sw = document.getElementById('mobileSwitch');
-    const previewWrap = document.getElementById('previewWrap');
-    const currentMode = sw.getAttribute('data-mode') || 'code';
-    
-    render();
-
-    if (currentMode === 'code') {
-        sw.setAttribute('data-mode', 'preview');
-        document.getElementById('mBtnCode').classList.remove('active');
-        document.getElementById('mBtnPreview').classList.add('active');
-        previewWrap.classList.add('active');
-    } else {
-        sw.setAttribute('data-mode', 'code');
-        document.getElementById('mBtnPreview').classList.remove('active');
-        document.getElementById('mBtnCode').classList.add('active');
-        previewWrap.classList.remove('active');
-    }
-}
-
-function smartCopy() { 
-    const output = document.getElementById('output'); 
-    if (!output.innerText.trim() && !output.querySelector('img')) { alert("预览区为空"); return; } 
-    if(isMobile()) render();
-    const allElements = output.querySelectorAll('*'); 
-    allElements.forEach(el => { const style = window.getComputedStyle(el); if (style.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)') el.style.backgroundColor = style.backgroundColor; if (style.color) el.style.color = style.color; if (style.borderRadius !== '0px') el.style.borderRadius = style.borderRadius; if (style.backgroundImage !== 'none') el.style.backgroundImage = style.backgroundImage; if (style.borderTopWidth !== '0px') { el.style.borderTop = style.borderTop; el.style.borderBottom = style.borderBottom; el.style.borderLeft = style.borderLeft; el.style.borderRight = style.borderRight; } el.style.padding = style.padding; el.style.margin = style.margin; el.style.fontSize = style.fontSize; el.style.lineHeight = style.lineHeight; el.style.textAlign = style.textAlign; el.style.display = style.display; el.style.boxShadow = style.boxShadow; el.style.textShadow = style.textShadow; el.style.borderImage = style.borderImage;}); 
-    let htmlContent = output.innerHTML; 
-    htmlContent = htmlContent.replace(/<div/gi, '<section'); htmlContent = htmlContent.replace(/<\/div>/gi, '</section>'); 
-    const copyHandler = (e) => { e.preventDefault(); e.clipboardData.setData('text/html', htmlContent); e.clipboardData.setData('text/plain', output.innerText); }; 
-    document.addEventListener('copy', copyHandler); 
-    try { const successful = document.execCommand('copy'); if (successful) { alert("✅ 已复制！去公众号粘贴吧"); } else { throw new Error('Copy failed'); } } catch (err) { alert('请手动全选复制'); } finally { document.removeEventListener('copy', copyHandler); } 
-}
-
-function generateImage() { 
-    const output = document.getElementById('output'); 
-    if (!output.innerText.trim() && !output.querySelector('img')) { alert("预览区为空"); return; } 
-    
-    // V40 关键修复：永远不要破坏 HTML 结构，只修改文字节点
-    // 这样切换手机模式时，icon-box 依然存在
-    const btnText = document.querySelector('.btn-img .btn-text');
-    const originalText = btnText.innerText;
-    
-    btnText.innerText = "⏳"; // 只改文字，不改 innerHTML
-
-    const originalBg = output.style.backgroundColor; 
-    output.style.backgroundColor = "#ffffff"; 
-    html2canvas(output, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => { 
-        const link = document.createElement('a'); 
-        link.download = '小野排版_' + new Date().getTime() + '.png'; 
-        link.href = canvas.toDataURL(); 
-        link.click(); 
-        
-        btnText.innerText = originalText; // 还原文字
-        output.style.backgroundColor = originalBg; 
-    }).catch(err => { 
-        alert("生成失败"); 
-        btnText.innerText = originalText;
-        output.style.backgroundColor = originalBg; 
-    }); 
-}
-
-function clearInput() { if(confirm("确定清空吗？")) { document.getElementById('input').value = ''; document.getElementById('output').innerHTML = ''; } }
-window.onload = render;
+window.addEventListener('load', () => App.init());
 </script>
 </body>
 </html>
